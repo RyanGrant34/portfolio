@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Summer Menu Project — Budget Plan</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #f0d080;
+      --green: #2d5a27;
+      --green-light: #4a8c42;
+      --cream: #fdf6ec;
+      --dark: #1a1a1a;
+      --mid: #4a4a4a;
+      --border: #e8d9c0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--cream);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, var(--green) 0%, #1e3d1a 60%, #0f2010 100%);
+      color: white;
+      padding: 28px 24px 22px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 30%, rgba(201,168,76,0.18) 0%, transparent 60%),
+                  radial-gradient(ellipse at 20% 80%, rgba(201,168,76,0.10) 0%, transparent 50%);
+    }
+    .hero-inner { position: relative; max-width: 760px; margin: 0 auto; }
+    .hero-tag {
+      display: inline-block;
+      background: rgba(201,168,76,0.2);
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 100px;
+      margin-bottom: 10px;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .hero h1 span { color: var(--gold-light); }
+    .hero p {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: rgba(255,255,255,0.65);
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* ── Main layout ── */
+    .page { max-width: 860px; margin: 0 auto; padding: 24px 20px 32px; }
+
+    /* ── Budget table ── */
+    .table-wrap {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.07);
+      margin-bottom: 28px;
+    }
+    .table-title {
+      padding: 16px 20px 0;
+    }
+    .table-title .fig-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--green-light);
+      margin-bottom: 4px;
+    }
+    .table-title h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 3px;
+    }
+    .table-title p {
+      font-size: 0.75rem;
+      color: #999;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--green); }
+    thead th {
+      padding: 9px 16px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.88);
+    }
+    thead th:last-child { text-align: right; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fdf8f2; }
+    td { padding: 8px 16px; vertical-align: middle; }
+    .td-cat {
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: var(--dark);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .cat-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .td-desc { font-size: 0.75rem; color: var(--mid); line-height: 1.4; }
+    .td-right { text-align: right; }
+    .td-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--green);
+    }
+    .td-pct {
+      font-size: 10px;
+      color: #bbb;
+      margin-top: 1px;
+    }
+    .row-total { background: linear-gradient(90deg, #f7f2e8, #fdf8f2) !important; }
+    .row-total .td-cat { font-size: 0.82rem; font-weight: 700; }
+    .row-total .td-amount { font-size: 1rem; color: var(--green); }
+
+    /* ── Bar chart ── */
+    .chart-wrap {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.07);
+    }
+    .chart-header {
+      margin-bottom: 14px;
+    }
+    .chart-header .fig-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--green-light);
+      margin-bottom: 4px;
+    }
+    .chart-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    .bar-list { display: flex; flex-direction: column; gap: 9px; }
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+    .bar-name { font-size: 0.78rem; font-weight: 500; color: var(--dark); }
+    .bar-val { font-size: 0.78rem; font-weight: 600; color: var(--green); }
+    .bar-track {
+      background: #ede8df;
+      border-radius: 100px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--green) 0%, var(--green-light) 100%);
+    }
+    .bar-fill.gold {
+      background: linear-gradient(90deg, #a07830 0%, var(--gold) 100%);
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 16px 24px;
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: #bbb;
+    }
+
+    @media (max-width: 640px) {
+      thead th:nth-child(2), td:nth-child(2) { display: none; }
+      .td-cat { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Project Budget Plan</div>
+    <h1>Downtown Toronto Restaurant<br><span>Summer Menu 2027</span></h1>
+    <p>June 1 – September 6, 2027 &nbsp;·&nbsp; All figures in CAD</p>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- ── Budget Table ── -->
+  <div class="table-wrap">
+    <div class="table-title">
+      <div class="fig-label">Figure 2.4.1</div>
+      <h2>Proposed Budget Breakdown</h2>
+      <p>Estimates based on current Downtown Toronto market rates for restaurant operations.</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Budget Allocation (CAD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="td-cat"><div class="cat-icon">🌿</div>Local Ingredient Sourcing</div></td>
+          <td class="td-desc">Initial procurement from local Toronto-area suppliers; Canadian strawberries, seasonal produce, heirloom tomatoes, fresh herbs</td>
+          <td class="td-right">
+            <div class="td-amount">$12,000</div>
+            <div class="td-pct">22.3%</div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="td-cat"><div class="cat-icon">📸</div>Photography &amp; Videography</div></td>
+          <td class="td-desc">Professional food photography for menu items and cocktails; short-form video content for social media rollout</td>
+          <td class="td-right">
+            <div class="td-amount">$4,000</div>
+            <div class="td-pct">7.4%</div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="td-cat"><div class="cat-icon">📣</div>Marketing &amp; Social Media</div></td>
+          <td class="td-desc">Paid social ads (Instagram, TikTok), influencer outreach, email campaign to existing customer base, Google Ads</td>
+          <td class="td-right">
+            <div class="td-amount">$7,500</div>
+            <div class="td-pct">13.9%</div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="td-cat"><div class="cat-icon">🖨️</div>Print &amp; Menu Design</div></td>
+          <td class="td-desc">Graphic design for additions menu inserts, table cards, chalkboard displays, and takeout packaging updates</td>
+          <td class="td-right">
+            <div class="td-amount">$3,500</div>
+            <div class="td-pct">6.5%</div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="td-cat"><div class="cat-icon">👨‍🍳</div>Staff Training</div></td>
+          <td class="td-desc">Kitchen and front-of-house training on new menu items, allergy information, and cocktail preparation</td>
+          <td class="td-right">
+            <div class="td-amount">$2,500</div>
+            <div class="td-pct">4.6%</div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="td-cat"><div class="cat-icon">☀️</div>Patio &amp; Seasonal Setup</div></td>
+          <td class="td-desc">Patio refresh, string lighting, planters with seasonal herbs, branded umbrella signage for summer ambiance</td>
+          <td class="td-right">
+            <div class="td-amount">$6,000</div>
+            <div class="td-pct">11.1%</div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="td-cat"><div class="cat-icon">🔒</div>Contingency (10%)</div></td>
+          <td class="td-desc">Emergency reserve for ingredient price fluctuations, supply chain delays, or unforeseen operational costs</td>
+          <td class="td-right">
+            <div class="td-amount">$4,900</div>
+            <div class="td-pct">9.1%</div>
+          </td>
+        </tr>
+        <tr class="row-total">
+          <td><div class="td-cat" style="font-weight:700;">TOTAL</div></td>
+          <td class="td-desc" style="color:#aaa; font-style:italic;">All categories combined</td>
+          <td class="td-right">
+            <div class="td-amount" style="font-size:1.25rem;">$53,900</div>
+            <div class="td-pct">CAD</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Bar Chart ── -->
+  <div class="chart-wrap">
+    <div class="chart-header">
+      <div class="fig-label">Visual Breakdown</div>
+      <h2>Budget Allocation by Category</h2>
+    </div>
+    <div class="bar-list">
+      <div>
+        <div class="bar-meta"><span class="bar-name">Local Ingredient Sourcing</span><span class="bar-val">$12,000</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+      </div>
+      <div>
+        <div class="bar-meta"><span class="bar-name">Marketing &amp; Social Media</span><span class="bar-val">$7,500</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:63%"></div></div>
+      </div>
+      <div>
+        <div class="bar-meta"><span class="bar-name">Patio &amp; Seasonal Setup</span><span class="bar-val">$6,000</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:50%"></div></div>
+      </div>
+      <div>
+        <div class="bar-meta"><span class="bar-name">Contingency (10%)</span><span class="bar-val">$4,900</span></div>
+        <div class="bar-track"><div class="bar-fill gold" style="width:41%"></div></div>
+      </div>
+      <div>
+        <div class="bar-meta"><span class="bar-name">Photography &amp; Videography</span><span class="bar-val">$4,000</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:33%"></div></div>
+      </div>
+      <div>
+        <div class="bar-meta"><span class="bar-name">Print &amp; Menu Design</span><span class="bar-val">$3,500</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:29%"></div></div>
+      </div>
+      <div>
+        <div class="bar-meta"><span class="bar-name">Staff Training</span><span class="bar-val">$2,500</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:21%"></div></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Summer Menu Project — Downtown Toronto Restaurant &nbsp;·&nbsp; Budget Plan 2027 &nbsp;·&nbsp; All figures in CAD
+</footer>
+
+</body>
+</html>
