@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ontario Funeral Home Tracker — PE Industry Investigation</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --noir:      #0a0a0a;
+            --charcoal:  #141414;
+            --slate:     #2a2a2a;
+            --mid:       #3a3a3a;
+            --smoke:     #f0eeeb;
+            --blood-red: #9b1010;
+            --red-glow:  rgba(155,16,16,.18);
+            --gold:      #d4af37;
+            --gold-dim:  rgba(212,175,55,.15);
+            --steel:     #8a9ab0;
+            --paper:     #faf9f7;
+            --green:     #1a6b3a;
+            --ofsa-blue: #1e5a9c;
+            --corp-amber:#7a5800;
+            --corp-bg:   rgba(122,88,0,.12);
+            --border:    #e2e0db;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Crimson Pro',Georgia,serif; background:var(--paper); color:var(--noir); line-height:1.6; overflow-x:hidden; }
+
+        /* ─── HERO ─────────────────────────────────────────────── */
+        .hero {
+            background: var(--noir);
+            color: var(--smoke);
+            padding: 80px 24px 64px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content:'';
+            position:absolute; inset:0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent, transparent 2px,
+                rgba(255,255,255,.018) 2px, rgba(255,255,255,.018) 4px
+            );
+            pointer-events:none;
+        }
+        .hero::after {
+            content:'';
+            position:absolute; bottom:0; left:0; right:0; height:3px;
+            background: linear-gradient(90deg, var(--blood-red), var(--gold), var(--blood-red));
+        }
+        .hero-content { max-width:1100px; margin:0 auto; position:relative; z-index:1; }
+        .kicker {
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            letter-spacing:3.5px; text-transform:uppercase;
+            color:var(--gold); margin-bottom:20px;
+            display:flex; align-items:center; gap:12px;
+        }
+        .kicker::before { content:''; display:block; width:32px; height:1px; background:var(--gold); }
+        h1.hero-title {
+            font-family:'Playfair Display',serif;
+            font-size:clamp(36px,6vw,72px); font-weight:900;
+            line-height:1.06; letter-spacing:-1.5px; margin-bottom:24px;
+        }
+        h1.hero-title span { color:var(--blood-red); }
+        .byline {
+            font-family:'IBM Plex Mono',monospace; font-size:12px;
+            color:#555; margin-bottom:28px; letter-spacing:.5px;
+        }
+        .breaking-alert {
+            display:inline-flex; align-items:center; gap:10px;
+            background:var(--blood-red); color:white;
+            padding:10px 20px;
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            letter-spacing:1.5px; text-transform:uppercase;
+            margin-bottom:28px;
+            animation: alert-pulse 2.8s ease-in-out infinite;
+        }
+        .breaking-dot {
+            width:8px; height:8px; border-radius:50%;
+            background:white; flex-shrink:0;
+            animation: dot-blink 1.4s ease-in-out infinite;
+        }
+        @keyframes alert-pulse { 0%,100%{opacity:1} 50%{opacity:.86} }
+        @keyframes dot-blink   { 0%,100%{opacity:1} 50%{opacity:.2} }
+        .hero-dek {
+            font-size:18px; line-height:1.9; max-width:780px;
+            color:rgba(240,238,235,.8);
+        }
+        .hero-dek strong { color:var(--gold); font-weight:600; }
+
+        /* ─── LIVE STATS BANNER ─────────────────────────────────── */
+        .stats-banner {
+            background:white;
+            border-bottom:1px solid var(--border);
+            padding:0 24px;
+            box-shadow:0 2px 16px rgba(0,0,0,.06);
+            position:sticky; top:0; z-index:200;
+        }
+        .stats-inner {
+            max-width:1340px; margin:0 auto;
+            display:flex; align-items:stretch;
+            overflow-x:auto;
+        }
+        .stat {
+            flex:1; min-width:130px;
+            text-align:center; padding:18px 12px;
+            border-right:1px solid var(--border);
+            transition:background .2s;
+        }
+        .stat:last-child { border-right:none; }
+        .stat-number {
+            font-family:'Playfair Display',serif; font-size:34px;
+            font-weight:900; color:var(--blood-red);
+            line-height:1; margin-bottom:4px;
+            transition:color .3s;
+        }
+        .stat-number.blue  { color:var(--ofsa-blue); }
+        .stat-number.green { color:var(--green); }
+        .stat-number.dark  { color:var(--noir); }
+        .stat-number.amber { color:var(--corp-amber); }
+        .stat-label {
+            font-family:'IBM Plex Mono',monospace; font-size:8.5px;
+            text-transform:uppercase; letter-spacing:1.4px; color:var(--steel);
+        }
+        .stat-sub {
+            font-family:'IBM Plex Mono',monospace; font-size:8px;
+            color:#bbb; margin-top:2px;
+        }
+
+        /* ─── CONTAINER ─────────────────────────────────────────── */
+        .container { max-width:1340px; margin:0 auto; padding:48px 24px; }
+
+        /* ─── KEY PLAYERS ───────────────────────────────────────── */
+        .section-label {
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            letter-spacing:3px; text-transform:uppercase;
+            color:var(--steel); margin-bottom:20px;
+            display:flex; align-items:center; gap:12px;
+        }
+        .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+        .players-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+            gap:20px; margin-bottom:52px;
+        }
+        .player-card {
+            background:white; border:1px solid var(--border);
+            padding:28px 30px;
+            box-shadow:0 2px 12px rgba(0,0,0,.04);
+            position:relative; overflow:hidden;
+        }
+        .player-card::before {
+            content:''; position:absolute; top:0; left:0; bottom:0; width:4px;
+        }
+        .player-card.pe-player::before  { background:var(--blood-red); }
+        .player-card.sci-player::before { background:var(--corp-amber); }
+        .player-card.ind-player::before { background:var(--green); }
+        .player-logo {
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:2px; text-transform:uppercase;
+            padding:4px 10px; display:inline-block; margin-bottom:14px;
+        }
+        .pe-player  .player-logo { background:var(--red-glow);  color:var(--blood-red); }
+        .sci-player .player-logo { background:var(--corp-bg);   color:var(--corp-amber); }
+        .ind-player .player-logo { background:rgba(26,107,58,.1); color:var(--green); }
+        .player-name {
+            font-family:'Playfair Display',serif; font-size:22px;
+            font-weight:700; margin-bottom:8px; line-height:1.2;
+        }
+        .player-meta {
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            color:var(--steel); margin-bottom:14px; line-height:1.8;
+        }
+        .player-desc { font-size:14px; line-height:1.75; color:#444; margin-bottom:14px; }
+        .player-brands {
+            display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;
+        }
+        .brand-chip {
+            font-family:'IBM Plex Mono',monospace; font-size:8px;
+            letter-spacing:.8px; text-transform:uppercase;
+            padding:4px 10px; background:#f0eeeb; color:#444;
+            border:1px solid var(--border);
+        }
+
+        /* ─── INVESTIGATION ─────────────────────────────────────── */
+        .investigation {
+            background:white; padding:44px 48px; margin-bottom:44px;
+            border-left:4px solid var(--blood-red);
+            box-shadow:0 2px 20px rgba(0,0,0,.05);
+        }
+        .investigation h2 {
+            font-family:'Playfair Display',serif; font-size:30px;
+            margin-bottom:20px; line-height:1.2;
+        }
+        .investigation p { font-size:16.5px; line-height:1.9; margin-bottom:16px; color:#2a2a2a; }
+        .investigation p:last-child { margin-bottom:0; }
+        .investigation strong { color:var(--blood-red); }
+        .pull-quote {
+            border-left:3px solid var(--gold); padding:14px 20px;
+            margin:20px 0; background:var(--gold-dim);
+            font-size:18px; font-style:italic; color:var(--noir); line-height:1.6;
+        }
+
+        /* ─── CONTROLS ──────────────────────────────────────────── */
+        .controls-section {
+            background:var(--charcoal); padding:32px 36px; margin-bottom:0;
+            border:3px solid var(--noir); border-bottom:none;
+        }
+        .controls-row {
+            display:flex; gap:16px; align-items:center; margin-bottom:20px;
+            flex-wrap:wrap;
+        }
+        .search-wrap { flex:1; min-width:220px; position:relative; }
+        .search-icon {
+            position:absolute; left:16px; top:50%; transform:translateY(-50%);
+            color:#555; font-size:14px; pointer-events:none;
+        }
+        .search-box {
+            width:100%; padding:14px 16px 14px 42px;
+            font-family:'Crimson Pro',serif; font-size:16px;
+            border:2px solid var(--mid); background:var(--slate);
+            color:white; transition:border-color .25s;
+        }
+        .search-box:focus { outline:none; border-color:var(--gold); }
+        .search-box::placeholder { color:#555; }
+        .search-clear {
+            position:absolute; right:12px; top:50%; transform:translateY(-50%);
+            background:none; border:none; color:#555; cursor:pointer;
+            font-size:18px; line-height:1; display:none; padding:4px;
+        }
+        .search-clear:hover { color:white; }
+        .sort-wrap { display:flex; align-items:center; gap:8px; }
+        .sort-label { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#555; white-space:nowrap; }
+        .sort-select {
+            background:var(--slate); border:2px solid var(--mid); color:white;
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            padding:12px 14px; cursor:pointer;
+        }
+        .sort-select:focus { outline:none; border-color:var(--gold); }
+        .export-btn {
+            padding:12px 20px; background:transparent;
+            border:2px solid var(--mid); color:#888;
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:1px; text-transform:uppercase;
+            cursor:pointer; white-space:nowrap; transition:all .2s;
+        }
+        .export-btn:hover { border-color:var(--gold); color:var(--gold); }
+        .controls-label {
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:1.5px; text-transform:uppercase;
+            color:#444; margin-bottom:8px;
+        }
+        .filters { display:flex; gap:8px; flex-wrap:wrap; }
+        .filter-btn {
+            padding:9px 18px; background:var(--slate);
+            border:2px solid transparent; color:#aaa;
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:1px; text-transform:uppercase;
+            cursor:pointer; transition:all .18s; white-space:nowrap;
+        }
+        .filter-btn:hover { background:var(--mid); border-color:#555; color:white; }
+        .filter-btn.active {
+            background:var(--blood-red); border-color:var(--blood-red); color:white;
+        }
+        .filter-btn.ofsa-style.active  { background:var(--ofsa-blue); border-color:var(--ofsa-blue); color:white; }
+        .filter-btn.ind-style.active   { background:var(--green); border-color:var(--green); color:white; }
+        .filter-btn.corp-style.active  { background:var(--corp-amber); border-color:var(--corp-amber); color:white; }
+        .filter-group { margin-bottom:14px; }
+
+        /* Brand sub-filter (shown only when PE active) */
+        .brand-filters {
+            display:none; flex-wrap:wrap; gap:6px;
+            padding-top:12px; border-top:1px solid var(--mid); margin-top:12px;
+        }
+        .brand-filters.visible { display:flex; }
+        .brand-filter-btn {
+            padding:7px 14px; background:transparent;
+            border:1px solid #444; color:#888;
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:.8px; text-transform:uppercase;
+            cursor:pointer; transition:all .18s; white-space:nowrap;
+        }
+        .brand-filter-btn:hover { border-color:var(--blood-red); color:var(--blood-red); }
+        .brand-filter-btn.active { background:var(--blood-red); border-color:var(--blood-red); color:white; }
+
+        /* ─── MAP + LIST GRID ───────────────────────────────────── */
+        .content-grid {
+            display:grid; grid-template-columns:1fr 400px;
+            border:3px solid var(--noir);
+            box-shadow:0 8px 40px rgba(0,0,0,.15);
+            margin-bottom:44px; height:720px;
+        }
+        #map { height:100%; min-height:400px; }
+        .homes-list {
+            height:720px; background:white;
+            border-left:3px solid var(--noir);
+            display:flex; flex-direction:column;
+        }
+        .list-header {
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            letter-spacing:1.5px; text-transform:uppercase;
+            color:var(--steel); padding:16px 20px 12px;
+            border-bottom:2px solid var(--noir); background:white;
+            position:sticky; top:0; z-index:10; flex-shrink:0;
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .list-count { color:var(--blood-red); font-weight:600; }
+        .list-body { flex:1; overflow-y:auto; }
+        .home-card {
+            padding:14px 20px; border-bottom:1px solid #ededeb;
+            cursor:pointer; transition:all .15s;
+            border-left:3px solid transparent;
+        }
+        .home-card:hover { background:#faf8f5; }
+        .home-card.pe-card   { border-left-color:transparent; }
+        .home-card.pe-card:hover  { border-left-color:var(--blood-red); background:rgba(155,16,16,.03); }
+        .home-card.ofsa-card:hover { border-left-color:var(--ofsa-blue); background:rgba(30,90,156,.03); }
+        .home-card.corp-card:hover { border-left-color:var(--corp-amber); background:var(--corp-bg); }
+        .home-card.ind-card:hover  { border-left-color:var(--green); background:rgba(26,107,58,.03); }
+        .home-name {
+            font-family:'Playfair Display',serif; font-weight:700;
+            font-size:15px; margin-bottom:4px; color:var(--noir);
+            line-height:1.3;
+        }
+        .home-city {
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            color:var(--steel); margin-bottom:6px;
+        }
+        .badges { display:flex; gap:5px; flex-wrap:wrap; }
+        .badge {
+            display:inline-block; padding:3px 8px;
+            font-family:'IBM Plex Mono',monospace; font-size:7.5px;
+            letter-spacing:.7px; text-transform:uppercase; font-weight:600;
+        }
+        .badge-pe          { background:var(--blood-red); color:white; }
+        .badge-ofsa        { background:var(--ofsa-blue); color:white; }
+        .badge-independent { background:var(--green); color:white; }
+        .badge-corporate   { background:var(--corp-amber); color:white; }
+        .badge-brand       { background:#eeece8; color:#555; border:1px solid #ddd; }
+        .no-results {
+            text-align:center; padding:48px 24px;
+            color:#bbb; font-family:'IBM Plex Mono',monospace; font-size:11px;
+            line-height:2;
+        }
+
+        /* ─── POPUP ─────────────────────────────────────────────── */
+        .leaflet-popup-content-wrapper {
+            font-family:'Crimson Pro',serif;
+            border:2px solid var(--noir); border-radius:0;
+            box-shadow:0 6px 24px rgba(0,0,0,.22); padding:0;
+        }
+        .leaflet-popup-tip { background:var(--noir); }
+        .leaflet-popup-content { margin:0; min-width:220px; }
+        .popup-inner { padding:16px 18px; }
+        .popup-type-bar {
+            height:4px; width:100%;
+            background:var(--blood-red);
+            margin-bottom:0;
+        }
+        .popup-type-bar.ofsa-bar { background:var(--ofsa-blue); }
+        .popup-type-bar.corp-bar { background:var(--corp-amber); }
+        .popup-type-bar.ind-bar  { background:var(--green); }
+        .popup-title {
+            font-family:'Playfair Display',serif; font-size:15px;
+            font-weight:700; margin-bottom:6px; line-height:1.3;
+        }
+        .popup-addr { font-size:12px; line-height:1.65; color:var(--steel); margin-bottom:10px; }
+        .popup-badges { display:flex; gap:5px; flex-wrap:wrap; }
+        .popup-badge {
+            display:inline-block; padding:3px 9px;
+            font-family:'IBM Plex Mono',monospace; font-size:7.5px;
+            letter-spacing:.7px; text-transform:uppercase; font-weight:600;
+        }
+
+        /* ─── LEGEND ────────────────────────────────────────────── */
+        .legend {
+            background:white; padding:32px 36px;
+            border:1px solid var(--border); margin-bottom:44px;
+        }
+        .legend-title {
+            font-family:'IBM Plex Mono',monospace; font-size:10px;
+            letter-spacing:2px; text-transform:uppercase;
+            color:var(--steel); margin-bottom:18px;
+        }
+        .legend-items { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+        .legend-item { display:flex; align-items:center; gap:12px; font-size:14px; }
+        .legend-dot {
+            width:14px; height:14px; border-radius:50%;
+            border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,.2);
+            flex-shrink:0;
+        }
+        .dot-pe   { background:var(--blood-red); }
+        .dot-ofsa { background:var(--ofsa-blue); }
+        .dot-ind  { background:var(--green); }
+        .dot-corp { background:var(--corp-amber); }
+
+        /* ─── AUTHOR / BYLINE ──────────────────────────────────── */
+        .author-bar {
+            display:flex; align-items:center; gap:14px; margin-top:32px;
+            padding-top:24px; border-top:1px solid rgba(255,255,255,.1);
+        }
+        .author-avatar {
+            width:44px; height:44px; border-radius:50%;
+            background:var(--blood-red); border:2px solid var(--gold);
+            display:flex; align-items:center; justify-content:center;
+            font-family:'Playfair Display',serif; font-size:18px; font-weight:700;
+            color:white; flex-shrink:0;
+        }
+        .author-info { display:flex; flex-direction:column; gap:2px; }
+        .author-name {
+            font-family:'IBM Plex Mono',monospace; font-size:11px;
+            letter-spacing:1px; color:white; font-weight:600;
+        }
+        .author-role {
+            font-family:'IBM Plex Mono',monospace; font-size:9.5px;
+            color:#666; letter-spacing:.5px;
+        }
+        .author-link {
+            display:inline-flex; align-items:center; gap:6px;
+            background:rgba(10,102,194,.25); border:1px solid rgba(10,102,194,.5);
+            color:#6ab0f5; padding:6px 14px;
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:1px; text-transform:uppercase; text-decoration:none;
+            transition:all .2s; margin-left:auto;
+        }
+        .author-link:hover { background:rgba(10,102,194,.45); color:white; }
+        .author-link svg { flex-shrink:0; }
+
+        /* ─── NEWS SECTION ──────────────────────────────────────── */
+        .news-section {
+            margin-bottom:52px;
+        }
+        .news-header {
+            display:flex; align-items:baseline; justify-content:space-between;
+            margin-bottom:24px;
+        }
+        .news-header-left { display:flex; align-items:center; gap:12px; }
+        .live-badge {
+            font-family:'IBM Plex Mono',monospace; font-size:8px;
+            letter-spacing:1.5px; text-transform:uppercase;
+            background:var(--blood-red); color:white; padding:3px 9px;
+            display:inline-flex; align-items:center; gap:6px;
+            animation: alert-pulse 2.5s ease-in-out infinite;
+        }
+        .live-badge::before {
+            content:''; display:block; width:6px; height:6px;
+            border-radius:50%; background:white;
+            animation: dot-blink 1.4s ease-in-out infinite;
+        }
+        .news-view-all {
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:1px; text-transform:uppercase; color:var(--steel);
+            text-decoration:none; border-bottom:1px solid var(--border);
+            padding-bottom:1px; transition:color .2s, border-color .2s;
+        }
+        .news-view-all:hover { color:var(--blood-red); border-color:var(--blood-red); }
+        .news-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+            gap:20px;
+        }
+        .news-card {
+            background:white; border:1px solid var(--border);
+            display:flex; flex-direction:column;
+            box-shadow:0 2px 10px rgba(0,0,0,.04);
+            transition:box-shadow .2s, transform .2s;
+            overflow:hidden;
+        }
+        .news-card:hover {
+            box-shadow:0 6px 24px rgba(0,0,0,.1);
+            transform:translateY(-2px);
+        }
+        .news-card-top { height:4px; background:var(--blood-red); flex-shrink:0; }
+        .news-card-top.acq  { background:var(--blood-red); }
+        .news-card-top.reg  { background:var(--ofsa-blue); }
+        .news-card-top.inv  { background:var(--gold); }
+        .news-card-top.corp { background:var(--corp-amber); }
+        .news-card-body { padding:22px 24px; flex:1; display:flex; flex-direction:column; }
+        .news-meta {
+            display:flex; align-items:center; gap:10px; margin-bottom:12px;
+        }
+        .news-cat {
+            font-family:'IBM Plex Mono',monospace; font-size:8px;
+            letter-spacing:1.2px; text-transform:uppercase; font-weight:600;
+            padding:3px 9px;
+        }
+        .cat-acq  { background:rgba(155,16,16,.1);  color:var(--blood-red); }
+        .cat-reg  { background:rgba(30,90,156,.1);  color:var(--ofsa-blue); }
+        .cat-inv  { background:rgba(212,175,55,.15); color:#7a6500; }
+        .cat-corp { background:var(--corp-bg); color:var(--corp-amber); }
+        .news-date {
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            color:var(--steel);
+        }
+        .news-headline {
+            font-family:'Playfair Display',serif; font-size:17px;
+            font-weight:700; line-height:1.35; margin-bottom:10px; color:var(--noir);
+        }
+        .news-excerpt { font-size:14px; line-height:1.75; color:#555; flex:1; margin-bottom:16px; }
+        .news-read-more {
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:1px; text-transform:uppercase;
+            color:var(--blood-red); text-decoration:none;
+            align-self:flex-start; border-bottom:1px solid transparent;
+            transition:border-color .2s;
+        }
+        .news-read-more:hover { border-color:var(--blood-red); }
+        .news-submit {
+            background:var(--charcoal); border:1px dashed #333;
+            padding:28px 24px; display:flex; align-items:center; gap:20px;
+            color:#555;
+        }
+        .news-submit-icon { font-size:28px; flex-shrink:0; }
+        .news-submit-text { flex:1; }
+        .news-submit-text strong {
+            display:block; font-family:'Playfair Display',serif;
+            font-size:16px; color:#aaa; margin-bottom:4px;
+        }
+        .news-submit-text span {
+            font-family:'IBM Plex Mono',monospace; font-size:10px; color:#444;
+        }
+        .news-submit-btn {
+            padding:10px 18px; background:transparent;
+            border:1px solid #444; color:#666;
+            font-family:'IBM Plex Mono',monospace; font-size:9px;
+            letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+            text-decoration:none; transition:all .2s; white-space:nowrap;
+        }
+        .news-submit-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+        /* ─── TAKE ACTION ───────────────────────────────────────── */
+        .take-action {
+            background:var(--noir); color:var(--smoke);
+            padding:64px 48px; margin-bottom:44px;
+            position:relative; overflow:hidden;
+        }
+        .take-action::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background:linear-gradient(90deg,var(--blood-red),var(--gold),var(--blood-red));
+        }
+        .take-action-grid {
+            display:grid; grid-template-columns:1fr 1fr; gap:52px; margin-top:36px;
+        }
+        .ta-col h3 {
+            font-family:'Playfair Display',serif; font-size:22px;
+            color:white; margin-bottom:16px; line-height:1.25;
+        }
+        .ta-col p { font-size:14.5px; line-height:1.85; color:#888; margin-bottom:16px; }
+        .checklist { list-style:none; margin:0 0 20px; padding:0; }
+        .checklist li {
+            font-size:14px; line-height:1.7; color:#aaa;
+            padding:8px 0 8px 28px; position:relative;
+            border-bottom:1px solid #1c1c1c;
+        }
+        .checklist li::before {
+            content:'✓'; position:absolute; left:0;
+            color:var(--gold); font-weight:700; font-size:13px;
+        }
+        .checklist li:last-child { border-bottom:none; }
+        .ta-highlight {
+            background:rgba(155,16,16,.12); border-left:3px solid var(--blood-red);
+            padding:16px 20px; margin-bottom:20px;
+            font-size:14px; line-height:1.75; color:#aaa;
+        }
+        .ta-highlight strong { color:var(--smoke); }
+        .share-row {
+            display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;
+        }
+        .share-btn {
+            display:inline-flex; align-items:center; gap:8px;
+            padding:11px 18px; font-family:'IBM Plex Mono',monospace;
+            font-size:9px; letter-spacing:1px; text-transform:uppercase;
+            text-decoration:none; border:1px solid; cursor:pointer;
+            transition:all .2s; white-space:nowrap; background:transparent;
+        }
+        .share-btn.twitter  { border-color:#1da1f2; color:#1da1f2; }
+        .share-btn.linkedin { border-color:#0a66c2; color:#0a66c2; }
+        .share-btn.copy     { border-color:#555; color:#888; }
+        .share-btn:hover { filter:brightness(1.25); }
+        .share-btn.twitter:hover  { background:rgba(29,161,242,.1); }
+        .share-btn.linkedin:hover { background:rgba(10,102,194,.1); }
+        .share-btn.copy:hover     { background:rgba(255,255,255,.05); color:white; }
+        .resources-list { list-style:none; padding:0; margin:0; }
+        .resources-list li { border-bottom:1px solid #1c1c1c; }
+        .resources-list li:last-child { border-bottom:none; }
+        .resources-list a {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:12px 0; color:#888; text-decoration:none;
+            font-size:14px; transition:color .2s;
+        }
+        .resources-list a:hover { color:white; }
+        .resources-list a::after { content:'→'; color:#444; font-size:12px; }
+        .resources-list a:hover::after { color:var(--gold); }
+
+        @media (max-width:860px) {
+            .take-action { padding:40px 24px; }
+            .take-action-grid { grid-template-columns:1fr; gap:36px; }
+            .news-grid { grid-template-columns:1fr; }
+        }
+
+        /* ─── METHODOLOGY ───────────────────────────────────────── */
+        .methodology {
+            background:var(--charcoal); color:var(--smoke);
+            padding:44px 48px; margin-bottom:44px;
+        }
+        .methodology h3 {
+            font-family:'Playfair Display',serif; font-size:24px;
+            margin-bottom:18px; color:white;
+        }
+        .methodology p { font-size:14.5px; line-height:1.85; margin-bottom:14px; color:#aaa; }
+        .methodology p:last-child { margin-bottom:0; }
+        .methodology strong { color:var(--gold); }
+        .methodology ul { margin:12px 0 14px 20px; }
+        .methodology li { font-size:14px; line-height:1.8; color:#aaa; margin-bottom:4px; }
+        .methodology li strong { color:#ccc; }
+
+        /* ─── FOOTER ─────────────────────────────────────────────── */
+        footer { background:var(--noir); color:var(--smoke); padding:56px 24px; }
+        .footer-content { max-width:900px; margin:0 auto; text-align:center; }
+        .footer-title {
+            font-family:'Playfair Display',serif; font-size:20px;
+            margin-bottom:6px;
+        }
+        .footer-rule {
+            width:48px; height:2px; background:var(--blood-red);
+            margin:16px auto 20px;
+        }
+        .footer-content p { font-size:13px; margin-bottom:8px; color:#666; line-height:1.7; }
+        .footer-content p strong { color:#aaa; }
+        .footer-disclaimer {
+            margin-top:28px; padding-top:20px; border-top:1px solid #222;
+            font-size:11px; color:#444; font-family:'IBM Plex Mono',monospace;
+            line-height:1.7;
+        }
+
+        /* ─── SCROLLBAR ──────────────────────────────────────────── */
+        .list-body::-webkit-scrollbar { width:5px; }
+        .list-body::-webkit-scrollbar-track { background:#f5f5f5; }
+        .list-body::-webkit-scrollbar-thumb { background:var(--blood-red); }
+
+        /* ─── BACK TO TOP ────────────────────────────────────────── */
+        #back-top {
+            position:fixed; bottom:28px; right:28px; z-index:999;
+            width:44px; height:44px; border-radius:50%;
+            background:var(--blood-red); color:white; border:none;
+            font-size:18px; cursor:pointer;
+            box-shadow:0 4px 16px rgba(0,0,0,.3);
+            opacity:0; pointer-events:none;
+            transition:opacity .3s;
+            display:flex; align-items:center; justify-content:center;
+        }
+        #back-top.visible { opacity:1; pointer-events:auto; }
+
+        /* ─── RESPONSIVE ─────────────────────────────────────────── */
+        @media (max-width:960px) {
+            .content-grid { grid-template-columns:1fr; height:auto; }
+            #map { height:500px; }
+            .homes-list { height:440px; border-left:none; border-top:3px solid var(--noir); }
+            .investigation { padding:28px 24px; }
+            .controls-section { padding:24px 20px; }
+            .methodology { padding:32px 24px; }
+        }
+        @media (max-width:640px) {
+            h1.hero-title { font-size:34px; }
+            .stat-number { font-size:28px; }
+            .players-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ HERO ══════════════════════════════════════════════════════ -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="kicker">Investigative Data Project · Ontario Funeral Industry · 553 Licensed Establishments</div>
+        <h1 class="hero-title">The <span>Private Equity</span><br>Funeral Home Tracker</h1>
+        <div class="byline">Complete BAO registry · Mapping corporate consolidation in Ontario's death-care sector · March 2026</div>
+        <div class="breaking-alert">
+            <span class="breaking-dot"></span>
+            <span>Birch Hill Equity Partners &amp; Homesteaders Life acquire Park Lawn for C$1.2B — 2024</span>
+        </div>
+        <p class="hero-dek">
+            In 2024, Toronto-based <strong>Birch Hill Equity Partners</strong> and Iowa-based
+            <strong>Homesteaders Life Company</strong> acquired Park Lawn Corporation for C$1.2 billion,
+            taking Canada's largest funeral company private. Meanwhile, US giant
+            <strong>Service Corporation International (SCI)</strong> operates 9 Ontario locations
+            under Dignity Memorial and Mount Pleasant. This tracker maps all
+            <strong>553 licensed funeral establishments</strong> in the province,
+            sourced directly from the Bereavement Authority of Ontario.
+        </p>
+        <div class="author-bar">
+            <div class="author-avatar">RG</div>
+            <div class="author-info">
+                <span class="author-name">Ryan Grant</span>
+                <span class="author-role">Investigative Researcher · Ontario Funeral Industry</span>
+            </div>
+            <a class="author-link"
+               href="https://www.linkedin.com/in/ryangrant/"
+               target="_blank" rel="noopener noreferrer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                Connect on LinkedIn
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ LIVE STATS BANNER ═══════════════════════════════════════ -->
+<div class="stats-banner">
+    <div class="stats-inner">
+        <div class="stat">
+            <div class="stat-number dark" id="stat-total">553</div>
+            <div class="stat-label">Total Licensed</div>
+            <div class="stat-sub">Ontario (BAO)</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number" id="stat-pe">51</div>
+            <div class="stat-label">PE-Backed</div>
+            <div class="stat-sub">Birch Hill / Park Lawn</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number amber" id="stat-corp">9</div>
+            <div class="stat-label">Corporate</div>
+            <div class="stat-sub">SCI / Dignity Memorial</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number blue" id="stat-ofsa">10</div>
+            <div class="stat-label">OFSA Verified</div>
+            <div class="stat-sub">Independent members</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number green" id="stat-ind">483</div>
+            <div class="stat-label">Independent</div>
+            <div class="stat-sub">Family-owned</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number" id="stat-share">9.2%</div>
+            <div class="stat-label">PE Market Share</div>
+            <div class="stat-sub">10.8% incl. corporate</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MAIN CONTENT ════════════════════════════════════════════ -->
+<div class="container">
+
+    <!-- KEY PLAYERS -->
+    <div class="section-label">Key Corporate Players</div>
+    <div class="players-grid">
+        <div class="player-card pe-player">
+            <div class="player-logo">PE · Private Equity</div>
+            <div class="player-name">Birch Hill Equity Partners<br>&amp; Homesteaders Life</div>
+            <div class="player-meta">
+                Toronto, ON &amp; West Des Moines, IA<br>
+                Acquisition: C$1.2B · 2024<br>
+                Target: Park Lawn Corporation
+            </div>
+            <div class="player-desc">
+                Toronto-based Birch Hill partnered with Iowa-based Homesteaders Life — a preneed insurance specialist — to take Park Lawn private in 2024. Park Lawn is Canada's largest funeral company, controlling 51 Ontario locations.
+            </div>
+            <div class="player-brands">
+                <span class="brand-chip">Park Lawn</span>
+                <span class="brand-chip">Turner &amp; Porter</span>
+                <span class="brand-chip">Arbor Memorial</span>
+                <span class="brand-chip">Kelly</span>
+                <span class="brand-chip">Hulse Playfair</span>
+                <span class="brand-chip">Tubman</span>
+                <span class="brand-chip">Ward</span>
+            </div>
+        </div>
+        <div class="player-card sci-player">
+            <div class="player-logo">NYSE: SCI · Corporate</div>
+            <div class="player-name">Service Corporation<br>International (SCI)</div>
+            <div class="player-meta">
+                Houston, TX (NYSE: SCI)<br>
+                World's largest funeral company<br>
+                Ontario locations: 9
+            </div>
+            <div class="player-desc">
+                SCI operates in Ontario through two brands: <strong style="color:var(--corp-amber)">Dignity Memorial</strong> (Cardinal Funeral Homes, Kane-Jerrett, Jerrett) and the <strong style="color:var(--corp-amber)">Mount Pleasant Group</strong> (Mount Pleasant, Humphrey-Newbigging). SCI trades publicly on the NYSE.
+            </div>
+            <div class="player-brands">
+                <span class="brand-chip">Dignity Memorial</span>
+                <span class="brand-chip">Cardinal Funeral Homes</span>
+                <span class="brand-chip">Kane-Jerrett</span>
+                <span class="brand-chip">Mount Pleasant Group</span>
+            </div>
+        </div>
+        <div class="player-card ind-player">
+            <div class="player-logo">OFSA · Verified Independent</div>
+            <div class="player-name">Ontario Funeral<br>Service Association</div>
+            <div class="player-meta">
+                Member-verified, family-owned operators<br>
+                OFSA-verified locations: 10<br>
+                Total independent: 493
+            </div>
+            <div class="player-desc">
+                The OFSA is a trade association representing independent and family-owned funeral homes. The 493 independent homes in this tracker — 10 OFSA-verified — represent families that have resisted corporate acquisition.
+            </div>
+            <div class="player-brands">
+                <span class="brand-chip">Henry Walser</span>
+                <span class="brand-chip">Dreisinger</span>
+                <span class="brand-chip">Brombal</span>
+                <span class="brand-chip">Weaver Family</span>
+                <span class="brand-chip">Merritt</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- INVESTIGATION -->
+    <div class="investigation">
+        <div class="section-label">Investigation</div>
+        <h2>Mapping Consolidation in Ontario's Death-Care Industry</h2>
+        <p>
+            Ontario's funeral industry is undergoing rapid, largely invisible consolidation.
+            <strong>Birch Hill Equity Partners</strong>, a Toronto-based private equity firm,
+            partnered with Iowa-based <strong>Homesteaders Life Company</strong> — a preneed life
+            insurance specialist — to acquire <strong>Park Lawn Corporation</strong> in 2024 for
+            C$1.2 billion, taking Canada's largest publicly-traded funeral company private.
+            Park Lawn now controls <strong>51 Ontario funeral homes</strong> under brands
+            including Turner &amp; Porter, Arbor Memorial, Kelly, Hulse Playfair &amp; McGarry,
+            Tubman, and Ward.
+        </p>
+        <div class="pull-quote">
+            "Park Lawn is the largest publicly traded Canadian-owned funeral, cremation and cemetery
+            provider" — and is now privately held by PE and a US insurance conglomerate.
+        </div>
+        <p>
+            Separately, Houston-based <strong>Service Corporation International (SCI)</strong> — the
+            world's largest funeral company (NYSE: SCI) — operates 9 Ontario locations under its
+            <strong>Dignity Memorial</strong> brand (Cardinal Funeral Homes, Kane-Jerrett, Jerrett Funeral Homes)
+            and the <strong>Mount Pleasant Group</strong> (Mount Pleasant, Humphrey-Newbigging).
+        </p>
+        <p>
+            This tracker maps <strong>all 553 active, licensed funeral establishments</strong>
+            in Ontario, sourced directly from the Bereavement Authority of Ontario (BAO) public registry.
+            Every establishment has been geocoded and classified by ownership: PE-backed, corporate,
+            OFSA-verified independent, or independent. PE and corporate homes together represent
+            <strong>10.8%</strong> of licensed establishments — concentrated in the
+            highest-volume urban markets.
+        </p>
+    </div>
+
+    <!-- NEWS & UPDATES -->
+    <div class="news-section">
+        <div class="news-header">
+            <div class="news-header-left">
+                <div class="section-label" style="margin-bottom:0;">News &amp; Updates</div>
+                <span class="live-badge">Live</span>
+            </div>
+            <a href="#" class="news-view-all">View all updates →</a>
+        </div>
+        <div class="news-grid">
+
+            <!-- Story 1 -->
+            <div class="news-card">
+                <div class="news-card-top acq"></div>
+                <div class="news-card-body">
+                    <div class="news-meta">
+                        <span class="news-cat cat-acq">Acquisition</span>
+                        <span class="news-date">June 2024</span>
+                    </div>
+                    <div class="news-headline">Birch Hill &amp; Homesteaders Life Announce C$1.2B Park Lawn Deal</div>
+                    <p class="news-excerpt">
+                        Toronto-based private equity firm Birch Hill Equity Partners, in partnership with Iowa-based Homesteaders Life Company, announced an agreement to acquire Park Lawn Corporation — Canada's largest publicly-traded funeral company — for approximately C$1.2 billion, taking the company private.
+                    </p>
+                    <a href="#" class="news-read-more">Read more →</a>
+                </div>
+            </div>
+
+            <!-- Story 2 -->
+            <div class="news-card">
+                <div class="news-card-top corp"></div>
+                <div class="news-card-body">
+                    <div class="news-meta">
+                        <span class="news-cat cat-corp">Corporate</span>
+                        <span class="news-date">2024</span>
+                    </div>
+                    <div class="news-headline">SCI's Dignity Memorial Expands Ontario Footprint via Kane-Jerrett</div>
+                    <p class="news-excerpt">
+                        Service Corporation International (NYSE: SCI) — the world's largest funeral company — continues to expand in Ontario through its Dignity Memorial brand, now operating Cardinal Funeral Homes, Kane-Jerrett Funeral Homes, and Jerrett Funeral Homes across the Greater Toronto Area.
+                    </p>
+                    <a href="#" class="news-read-more">Read more →</a>
+                </div>
+            </div>
+
+            <!-- Story 3 -->
+            <div class="news-card">
+                <div class="news-card-top inv"></div>
+                <div class="news-card-body">
+                    <div class="news-meta">
+                        <span class="news-cat cat-inv">Investigation</span>
+                        <span class="news-date">March 2026</span>
+                    </div>
+                    <div class="news-headline">BAO Registry Audit: 553 Active Funeral Licences in Ontario</div>
+                    <p class="news-excerpt">
+                        A full scrape of the Bereavement Authority of Ontario's public registry reveals 553 active funeral establishment licences province-wide. Of those, 51 are operated by PE-backed Park Lawn Corporation and 9 by SCI — meaning roughly 1 in 9 Ontario funeral homes is owned by a major corporate or private equity operator.
+                    </p>
+                    <a href="#" class="news-read-more">Read more →</a>
+                </div>
+            </div>
+
+            <!-- Story 4 -->
+            <div class="news-card">
+                <div class="news-card-top acq"></div>
+                <div class="news-card-body">
+                    <div class="news-meta">
+                        <span class="news-cat cat-acq">Acquisition</span>
+                        <span class="news-date">2023</span>
+                    </div>
+                    <div class="news-headline">Park Lawn Acquires 80% Interest in Mundell Funeral Home, Orillia</div>
+                    <p class="news-excerpt">
+                        Park Lawn Corporation continued its Ontario acquisition strategy with the purchase of an 80% interest in Mundell Funeral Home Limited in Orillia — a decades-old family business and community fixture in central Ontario.
+                    </p>
+                    <a href="#" class="news-read-more">Read more →</a>
+                </div>
+            </div>
+
+            <!-- Story 5 -->
+            <div class="news-card">
+                <div class="news-card-top reg"></div>
+                <div class="news-card-body">
+                    <div class="news-meta">
+                        <span class="news-cat cat-reg">Regulation</span>
+                        <span class="news-date">Ongoing</span>
+                    </div>
+                    <div class="news-headline">What Consumers Should Know About Corporate-Owned Funeral Homes</div>
+                    <p class="news-excerpt">
+                        Families rarely know who owns the funeral home they walk into. Ontario's Funeral, Burial and Cremation Services Act requires transparent pricing, but doesn't mandate disclosure of PE or corporate ownership. Advocates say this needs to change as consolidation accelerates.
+                    </p>
+                    <a href="#" class="news-read-more">Read more →</a>
+                </div>
+            </div>
+
+            <!-- Submit a tip card -->
+            <div class="news-card">
+                <div class="news-card-top" style="background:#222;"></div>
+                <div class="news-submit">
+                    <div class="news-submit-icon">📬</div>
+                    <div class="news-submit-text">
+                        <strong>Have a tip or update?</strong>
+                        <span>Ownership changes, acquisitions, or community impact — share what you know.</span>
+                    </div>
+                    <a href="https://www.linkedin.com/in/ryangrant/"
+                       target="_blank" class="news-submit-btn">Contact Ryan →</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-section">
+        <div class="controls-row">
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-box" id="search"
+                       placeholder="Search by name, city, brand, or address…">
+                <button class="search-clear" id="search-clear" title="Clear search">✕</button>
+            </div>
+            <div class="sort-wrap">
+                <span class="sort-label">Sort</span>
+                <select class="sort-select" id="sort-select">
+                    <option value="name">A → Z</option>
+                    <option value="name-desc">Z → A</option>
+                    <option value="city">By City</option>
+                    <option value="pe-first">PE First</option>
+                    <option value="brand">By Brand</option>
+                </select>
+            </div>
+            <button class="export-btn" id="export-btn" title="Download filtered list as CSV">⬇ Export CSV</button>
+        </div>
+        <div class="filter-group">
+            <div class="controls-label">Ownership Type</div>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">All (553)</button>
+                <button class="filter-btn" data-filter="pe">PE-Backed (51)</button>
+                <button class="filter-btn corp-style" data-filter="corporate">Corporate (9)</button>
+                <button class="filter-btn ofsa-style" data-filter="ofsa">OFSA (10)</button>
+                <button class="filter-btn ind-style" data-filter="independent">Independent (483)</button>
+            </div>
+            <div class="brand-filters" id="brand-filters">
+                <button class="brand-filter-btn active" data-brand="all">All Brands</button>
+                <button class="brand-filter-btn" data-brand="Turner &amp; Porter">Turner &amp; Porter</button>
+                <button class="brand-filter-btn" data-brand="Arbor Memorial">Arbor Memorial</button>
+                <button class="brand-filter-btn" data-brand="Kelly">Kelly</button>
+                <button class="brand-filter-btn" data-brand="Hulse Playfair">Hulse Playfair</button>
+                <button class="brand-filter-btn" data-brand="Tubman">Tubman</button>
+                <button class="brand-filter-btn" data-brand="Ward">Ward</button>
+                <button class="brand-filter-btn" data-brand="Park Lawn">Park Lawn (Direct)</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <div class="controls-label">Region</div>
+            <div class="filters">
+                <button class="filter-btn" data-filter="toronto">Toronto / GTA</button>
+                <button class="filter-btn" data-filter="ottawa">Ottawa Region</button>
+                <button class="filter-btn" data-filter="hamilton">Hamilton / Burlington</button>
+                <button class="filter-btn" data-filter="muskoka">Muskoka / Simcoe</button>
+                <button class="filter-btn" data-filter="london">London / SW Ontario</button>
+                <button class="filter-btn" data-filter="north">Northern Ontario</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div id="map"></div>
+        <div class="homes-list">
+            <div class="list-header">
+                <span>Funeral Homes</span>
+                <span class="list-count" id="list-count">— shown</span>
+            </div>
+            <div class="list-body" id="list-body"></div>
+        </div>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+        <div class="legend-title">Legend</div>
+        <div class="legend-items">
+            <div class="legend-item">
+                <div class="legend-dot dot-pe"></div>
+                <span><strong>PE-Backed (51)</strong> — Birch Hill / Homesteaders via Park Lawn Corp</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-corp"></div>
+                <span><strong>Corporate (9)</strong> — SCI / Dignity Memorial &amp; Mount Pleasant</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-ofsa"></div>
+                <span><strong>OFSA Member (10)</strong> — Verified independent operator</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-ind"></div>
+                <span><strong>Independent (483)</strong> — Family or community-owned</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAKE ACTION -->
+</div><!-- /container -->
+
+<section class="take-action">
+    <div style="max-width:1100px; margin:0 auto;">
+        <div class="section-label" style="color:#444; margin-bottom:8px;">Inspired by <a href="https://privateequityvet.org" target="_blank" style="color:#555; text-decoration:none;">Private Equity Vet</a></div>
+        <h2 style="font-family:'Playfair Display',serif; font-size:clamp(28px,4vw,44px); font-weight:900; color:white; line-height:1.1; max-width:760px;">
+            What You Can Do About<br>Corporate Consolidation
+        </h2>
+        <div class="take-action-grid">
+
+            <!-- Left column: consumer advice -->
+            <div class="ta-col">
+                <h3>Questions to Ask Before Choosing a Funeral Home</h3>
+                <div class="ta-highlight">
+                    <strong>You have a right to know who owns the business</strong> you are entrusting with your loved one.
+                    In Ontario, corporate and PE-owned homes are not required to disclose their ownership at point of service.
+                </div>
+                <ul class="checklist">
+                    <li>Is this funeral home independently owned, or part of a larger corporate group?</li>
+                    <li>Has ownership changed in the last 5 years?</li>
+                    <li>Are prices set locally, or by a head office elsewhere?</li>
+                    <li>Can you see a General Price List before making any decisions?</li>
+                    <li>Will the same staff serve your family, or is there high turnover?</li>
+                    <li>Is this home licensed by the BAO? (Verify at portal.thebao.ca)</li>
+                    <li>Does the home belong to the OFSA (Ontario Funeral Service Association)?</li>
+                </ul>
+
+                <h3 style="margin-top:8px;">Know Your Rights in Ontario</h3>
+                <p>Ontario's <em>Funeral, Burial and Cremation Services Act, 2002</em> requires all funeral homes to provide a General Price List on request, display licence information, and obtain written consent before providing services. The BAO regulates and inspects all licensed funeral establishments.</p>
+                <p>If you have a complaint about a funeral home, contact the <strong>Bereavement Authority of Ontario</strong> at <a href="https://thebao.ca" target="_blank" style="color:var(--gold);">thebao.ca</a></p>
+            </div>
+
+            <!-- Right column: share + resources -->
+            <div class="ta-col">
+                <h3>Help Spread Awareness</h3>
+                <p>Corporate consolidation of funeral services is happening quietly, affecting families at their most vulnerable moments. Sharing this tracker helps more Ontarians understand who owns the funeral homes in their communities.</p>
+
+                <div class="share-row">
+                    <a class="share-btn twitter"
+                       href="https://twitter.com/intent/tweet?text=Who+owns+Ontario%27s+funeral+homes%3F+PE-backed+Park+Lawn+Corp+controls+51+locations.+Track+them+all+%E2%86%92&url=https%3A%2F%2Fgithub.com%2Fryangrant34"
+                       target="_blank" rel="noopener">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        Share on X
+                    </a>
+                    <a class="share-btn linkedin"
+                       href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2Fryangrant34"
+                       target="_blank" rel="noopener">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        Share on LinkedIn
+                    </a>
+                    <button class="share-btn copy" onclick="navigator.clipboard.writeText(window.location.href).then(()=>this.textContent='✓ Copied!')">
+                        📋 Copy Link
+                    </button>
+                </div>
+
+                <h3 style="margin-top:32px;">Useful Resources</h3>
+                <ul class="resources-list">
+                    <li><a href="https://thebao.ca" target="_blank">Bereavement Authority of Ontario (BAO)</a></li>
+                    <li><a href="https://portal.thebao.ca/public-register/" target="_blank">BAO Public Licence Registry</a></li>
+                    <li><a href="https://www.ofsa.org" target="_blank">Ontario Funeral Service Association (OFSA)</a></li>
+                    <li><a href="https://www.ontario.ca/laws/statute/02f33" target="_blank">Funeral, Burial &amp; Cremation Services Act, 2002</a></li>
+                    <li><a href="https://www.sedar.com" target="_blank">SEDAR+ (Park Lawn public filings)</a></li>
+                    <li><a href="https://privateequityvet.org" target="_blank">Private Equity Vet (inspiration)</a></li>
+                </ul>
+
+                <div style="margin-top:28px; padding:20px; background:rgba(255,255,255,.04); border:1px solid #222;">
+                    <p style="font-size:13px; color:#555; margin-bottom:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:.5px;">BUILT &amp; MAINTAINED BY</p>
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:40px; height:40px; border-radius:50%; background:var(--blood-red); border:2px solid rgba(212,175,55,.4); display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:16px; font-weight:700; color:white; flex-shrink:0;">RG</div>
+                        <div>
+                            <div style="font-family:'Playfair Display',serif; font-size:16px; color:white; margin-bottom:2px;">Ryan Grant</div>
+                            <a href="https://www.linkedin.com/in/ryangrant/" target="_blank" rel="noopener"
+                               style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#0a66c2; text-decoration:none; letter-spacing:.5px;">
+                                linkedin.com/in/ryangrant
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<div class="container" style="padding-top:0;">
+
+    <!-- METHODOLOGY -->
+    <div class="methodology">
+        <div class="section-label" style="color:#555;">Methodology &amp; Data Sources</div>
+        <h3>How This Data Was Built</h3>
+        <p>
+            <strong>Registry data</strong> was scraped from the Bereavement Authority of Ontario (BAO) public registry
+            at <strong>portal.thebao.ca</strong> in March 2026, capturing all active Funeral Establishment Operator
+            licences (Class 1 &amp; Class 2). The portal runs on Microsoft Dynamics 365; data was extracted via
+            Playwright browser automation.
+        </p>
+        <p><strong>Classification methodology:</strong></p>
+        <ul>
+            <li><strong>PE-Backed:</strong> Name-pattern matched against Park Lawn Corporation's verified brand roster, with city-level disambiguation for ambiguous names (e.g. Armstrong Funeral Home — Oshawa = PE, Port Colborne = independent).</li>
+            <li><strong>Corporate:</strong> Matched against known SCI/Dignity Memorial brands (Cardinal, Kane-Jerrett, Jerrett) and Mount Pleasant Group (Mount Pleasant, Humphrey-Newbigging, R.S. Kane).</li>
+            <li><strong>OFSA Member:</strong> Cross-referenced against the Ontario Funeral Service Association public membership directory.</li>
+            <li><strong>Independent:</strong> All remaining active licensees not matching the above categories.</li>
+        </ul>
+        <p>
+            <strong>Geocoding</strong> was performed via Nominatim (OpenStreetMap), achieving <strong>552/553 successful geocodes (99.8%)</strong>.
+            One establishment could not be geocoded and does not appear on the map.
+        </p>
+        <p>
+            <strong>Ownership context</strong> sourced from SEDAR+ public filings, Park Lawn Corporation investor
+            relations materials, SCI annual reports, and news coverage of the Birch Hill/Homesteaders acquisition.
+        </p>
+    </div>
+
+</div><!-- /container -->
+
+<!-- ═══ FOOTER ═══════════════════════════════════════════════════ -->
+<footer>
+    <div class="footer-content">
+        <div class="footer-title">Ontario Funeral Home Tracker</div>
+        <div class="footer-rule"></div>
+        <p style="margin-bottom:20px;">
+            An investigative data project by
+            <strong>
+                <a href="https://www.linkedin.com/in/ryangrant/"
+                   target="_blank" rel="noopener"
+                   style="color:white; text-decoration:none; border-bottom:1px solid #444; padding-bottom:1px;">
+                    Ryan Grant
+                </a>
+            </strong>
+        </p>
+        <p>Data sources: <strong>Bereavement Authority of Ontario (BAO)</strong> ·
+           <strong>Park Lawn Corporation / SEDAR+</strong> · <strong>SCI / Dignity Memorial</strong> ·
+           <strong>OFSA Membership Directory</strong></p>
+        <p>All 553 establishments were active and licensed as of March 2026.</p>
+        <div class="footer-disclaimer">
+            This tracker is produced for public-interest and journalistic purposes. All data is
+            sourced from public records. Classification reflects publicly verifiable ownership.
+            Not legal or investment advice. · Inspired by
+            <a href="https://privateequityvet.org" target="_blank"
+               style="color:#555; text-decoration:none;">privateequityvet.org</a>
+        </div>
+    </div>
+</footer>
+
+<button id="back-top" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ═══ SCRIPTS ══════════════════════════════════════════════════ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<script>
+/* ── Data ─────────────────────────────────────────────────────── */
+const CSV = `Name,Address,City,Province,Postal,Phone,Type,OFSA,Brand,Lat,Lng
+A. Millard George Funeral Home Limited,60 Ridout Street South,London,ON,,,Independent,No,,42.973922,-81.249400
+A. Roy Miller Funeral Chapel,1695 St. Clair Avenue West,Toronto,ON,,,Independent,No,,43.674188,-79.459105
+A.M. Paul Funeral Home Limited,531 Main Street,Powassan,ON,,,Independent,No,,46.079607,-79.360358
+Accettone Funeral Home Ltd.,384 Finley Avenue,Ajax,ON,,,Independent,No,,43.839065,-79.029852
+Adams Funeral Home and Cremation Services,445 St. Vincent St,Barrie,ON,,,Independent,No,,44.412864,-79.689217
+Affordable Burial and Cremation,205 Nebo Rd.,Hamilton,ON,,,Independent,No,,43.192562,-79.836734
+Affordable Cremation Options Ltd.,1981 B Dundas St W,Mississauga,ON,,,Independent,No,,43.522848,-79.681733
+Affordable Funeral Services Inc.,Unit 1-150 Britannia Rd. East,Mississauga,ON,,,Independent,No,,43.589623,-79.644388
+Aftercare Cremation & Burial Service Limited,1097 O'Connor Drive,Toronto,ON,,,PE,No,Arbor Memorial,43.710565,-79.308700
+Ainsworth Funeral Home,288 Noxon Ave.,Wellington,ON,,,Independent,No,,43.759012,-80.461499
+Alan R. Barker Funeral Home & Chapel Inc.,19 McArthur Avenue,Carleton Place,ON,,,Independent,No,,45.140337,-76.146567
+Alexander & Houle Funeral Home Ltd.,245 Wellington St. West,Chatham,ON,,,Independent,No,,42.403308,-82.189536
+Alternative Funeral Services,10 Charles Walk,Elliot Lake,ON,,,Independent,No,,46.373464,-82.652893
+Anderson Funeral Home & Cremation Centre,895 Ouellette Avenue,Windsor,ON,,,Independent,No,,42.310405,-83.035116
+Andrew L. Hodges Funeral Home Ltd.,47 Wellington Street South,St. Marys,ON,,,Independent,No,,43.257975,-81.141721
+Andrews Community Funeral Centre,8190 Dixie Road,Brampton,ON,,,Independent,No,,43.702326,-79.712612
+Armstrong Funeral Home & Chapel Inc.,179 Clarence Street,Port Colborne,ON,,,Independent,No,,42.886211,-79.256458
+Armstrong Funeral Home Limited,124 King St. East,Oshawa,ON,,,PE,No,Arbor Memorial,43.898736,-78.859115
+Arn Funeral Home,212 Furnival Road,Rodney,ON,,,Independent,No,,42.553960,-81.665187
+Arn Funeral Home,193 Shackleton St.,Dutton,ON,,,Independent,No,,42.661203,-81.503479
+Arthur B. Ridley Funeral Home Limited,3080 Lakeshore Blvd. West,Toronto,ON,,,Independent,Yes,,43.622447,-79.482219
+Arthur Funeral Home - Barton & Kiteley Chapel,492 Wellington St. East,Sault Ste. Marie,ON,,,Independent,No,,46.511556,-84.327742
+Ashburnham Funeral Home & Reception Centre,840 Armour Road,Peterborough,ON,,,Independent,No,,44.320425,-78.310047
+Assumption Catholic Funeral Home,6933 Tomken Road,Mississauga,ON,,,Independent,No,,43.665599,-79.684561
+Badder & Robinson Funeral Home,211 Elm St. West,Bothwell,ON,,,Independent,No,,42.629038,-81.872923
+Badder Funeral Home & Reception Centre,"PO Box 40, 679 North Street",Dresden,ON,,,Independent,No,,42.590985,-82.179531
+Ballard Minor Funeral Homes Ltd.,315 Broad St. East,Dunnville,ON,,,Independent,No,,42.903663,-79.614101
+Barclay Funeral Home,1033 Prince Street,Lansdowne,ON,,,Independent,No,,44.402059,-76.017864
+Barclay Funeral Home Ltd.,137 Pearl St. East,Brockville,ON,,,Independent,No,,44.596870,-75.679443
+Barnes Memorial Funeral Home Ltd.,5295 Thickson Rd. North,Whitby,ON,,,Independent,No,,43.944840,-78.937757
+Barthel Funeral Home,566 Queenston Rd.,Cambridge,ON,,,Independent,No,,43.395566,-80.360950
+Basic Funerals and Cremation Choices,1934 St. Joseph Blvd.,Ottawa,ON,,,Independent,No,,45.462912,-75.542154
+Basic Funerals and Cremation Choices,2408 Haines Road,Mississauga,ON,,,Independent,No,,43.593568,-79.591307
+Basic Funerals and Cremation Choices - Jennett Memorial Centre,152 Bradford St.,Barrie,ON,,,Independent,No,,44.379566,-79.693798
+Bay Gardens Funeral Home,947 Rymal Rd. East,Hamilton,ON,,,Independent,No,,43.192134,-79.850697
+Bay Gardens Funeral Home,1010 Botanical Dr.,Burlington,ON,,,PE,No,Park Lawn,43.289034,-79.876459
+Beckett-Glaves Family Funeral Centre Ltd.,88 Brant Avenue,Brantford,ON,,,Independent,No,,43.141900,-80.272115
+"Beechwood Funeral, Cemetery And Cremation Services",280 Beechwood Ave.,Ottawa,ON,,,Independent,No,,45.440007,-75.675922
+Beggs Funeral Home Limited,175 Main St.,Thessalon,ON,,,Independent,No,,46.256607,-83.556563
+Benjamin's Park Memorial Chapel Inc.,2401 Steeles Ave. West,Toronto,ON,,,Independent,No,,43.784078,-79.481453
+Benner Funeral Services Inc.,1105 Benner Ave,Fort Erie,ON,,,PE,No,Park Lawn,42.906208,-78.959569
+Bernardo Funeral Home Ltd.,2960 Dufferin St.,Toronto,ON,,,PE,No,Arbor Memorial,43.709565,-79.454175
+Bernardo Funeral Home Ltd.,855 Albion Rd,Etobicoke,ON,,,PE,No,Arbor Memorial,43.734576,-79.560313
+Billingsley Funeral Home Ltd.,430 Ravenscliffe Rd.,Huntsville,ON,,,PE,No,Park Lawn,45.358821,-79.293706
+Blair & Son Funeral Directors Inc.,112 Beckwith Street North,Smiths Falls,ON,,,Independent,No,,44.904797,-76.021664
+Blair & Son Funeral Directors Inc.,15 Gore Street West,Perth,ON,,,Independent,No,,44.902201,-76.252064
+Blake Funeral Chapel,200 South May Street,Thunder Bay,ON,,,Independent,No,,48.382396,-89.245297
+Blenheim Community Funeral Home Ltd.,60 Stanley St.,Blenheim,ON,,,Independent,No,,42.332561,-81.994982
+Bocchinfuso Funeral Home (Niagara) Inc.,2 Regent St.,Thorold,ON,,,Independent,No,,43.127059,-79.200662
+Bourcier Funeral Home Ltd.,222 Spruce Street,Espanola,ON,,,Independent,No,,46.265341,-81.769867
+Brampton Crematorium & Visitation Centre Inc.,30 Bramwin Court,Brampton,ON,,,Independent,No,,43.720319,-79.685473
+Brampton Funeral Home & Cemetery,10061 Chinguacousy Road,Brampton,ON,,,Independent,No,,43.705824,-79.834804
+Brenneman Funeral Home Ltd.,141 John Street,Atwood,ON,,,Independent,No,,43.668876,-81.020645
+Brett Funeral Chapels Ltd.,20 George Street West,Havelock,ON,,,Independent,No,,44.434371,-77.886678
+Brett Funeral Chapels Ltd.,76 Bridge Street North,Hastings,ON,,,Independent,No,,44.308928,-77.956430
+Brian E. Wood Funeral Home Ltd.,250-14th Street West,Owen Sound,ON,,,Independent,No,,44.574164,-80.949438
+Brock & Visser Funeral Home Burial & Cremation Services Ltd.,845 Devonshire Ave.,Woodstock,ON,,,Independent,No,,43.144650,-80.744193
+Brombal Funeral Home & Cremation Care Ltd.,1 Delhi St.,Guelph,ON,,,Independent,Yes,,43.553682,-80.250236
+Brown Funeral Home & Cremation Centre,429 Second Street South,Kenora,ON,,,Independent,No,,54.024594,-89.161819
+Brown's Mortuary Services,7-169 Dufferin Street South,New Tecumseth,ON,,,Independent,No,,44.146549,-79.861906
+Buffam Leveille Funeral Home Ltd.,46 4th Avenue,Englehart,ON,,,Independent,No,,47.825574,-79.873362
+Buffam Léveillé Funeral Home Ltd.,483 Broadway St.,Haileybury,ON,,,Independent,No,,47.449816,-79.639167
+Burke Funeral Home,150 Church Street,Belleville,ON,,,Independent,No,,44.162036,-77.380124
+Butler Funeral Home,424 Niagara St.,St. Catharines,ON,,,Independent,No,,43.189444,-79.225674
+Byers Funeral Home Inc.,2990 Church St.,South Mountain,ON,,,Independent,No,,44.990667,-75.451777
+C.R. Gamble Funeral Home and Chapel Inc.,127 Church Street,Almonte,ON,,,Independent,No,,45.222478,-76.191956
+Cameron's Cremation & Funeral Services,1106 Yonge St. South,Walkerton,ON,,,Independent,No,,44.119889,-81.149787
+Capital Funeral Home & Cemetery,3700 Prince of Wales Dr.,Nepean,ON,,,Independent,No,,45.256185,-75.708742
+Cardinal Funeral Homes Ltd.,366 Bathurst Street,Toronto,ON,,,Corporate,No,Dignity Memorial / SCI,43.653087,-79.406718
+Cardinal Funeral Homes Ltd.,92 Annette Street,Toronto,ON,,,Corporate,No,Dignity Memorial / SCI,43.663758,-79.463202
+Carruthers & Davidson Funeral Home Limited,7313 Hwy 26,Stayner,ON,,,Independent,No,,44.419227,-80.091228
+Carruthers & Davidson Funeral Home Limited,509 River Rd. West,Wasaga Beach,ON,,,Independent,No,,44.527503,-79.994044
+Carson Funeral Homes - J.H. Lynn Chapel,290 First St.,Midland,ON,,,Independent,No,,44.749867,-79.887171
+Carson Funeral Homes - L. Doolittle Chapel,54 Coldwater St. East,Orillia,ON,,,Independent,No,,44.610688,-79.418063
+Cataraqui Cemetery and Funeral Services,927 Purdy's Mill Rd.,Kingston,ON,,,Independent,No,,44.305415,-76.428378
+Cavill-Turner Funeral Home,215-1 Bay Street,Gravenhurst,ON,,,PE,No,Park Lawn,44.919110,-79.377264
+Chapel Ridge Funeral Home & Cremation Centre,8911 Woodbine Ave,Markham,ON,,,PE,No,Arbor Memorial,43.859862,-79.359972
+Chatterson Funeral Home & Cremation Services,404 Hurontario St.,Collingwood,ON,,,Independent,No,,44.493089,-80.215891
+Circle of Life Cremation and Burial Centre Inc.,100 King St. East,Dundas,ON,,,Independent,No,,43.265927,-79.952629
+Coboconk Community Funeral Home,6644 Hwy #35,Coboconk,ON,,,Independent,No,,44.658022,-78.795586
+Coldwater Funeral Home,22 Sturgeon Bay Road,Coldwater,ON,,,Independent,No,,44.709030,-79.648706
+Cole Funeral Services,2037 McGee Side Rd.,Carp,ON,,,Independent,No,,45.345148,-76.036720
+Cole Funeral Services,2500 Baseline Rd.,Ottawa,ON,,,Independent,No,,45.340541,-75.784433
+Community Alternative Funeral & Cremation Services Ltd.,83 Hunter Street West,Peterborough,ON,,,Independent,No,,44.305914,-78.317033
+Comstock-Kaye Life Celebration Centre,356 Rubidge Street,Peterborough,ON,,,Independent,No,,44.304037,-78.326556
+Considerate Cremation & Burial Services Inc.,26 Nihan Dr.,St. Catharines,ON,,,Independent,No,,43.184269,-79.251149
+Cooper Funeral Home Limited,19 Talbot St. West,Jarvis,ON,,,Independent,No,,42.884471,-80.113941
+Coopérative Funéraire du District de Sudbury,4570 Rue St. Joseph,Hanmer,ON,,,Independent,No,,46.653056,-80.944796
+Coopérative Funéraire du District de Sudbury,4691 Regional Road 15,Chelmsford,ON,,,Independent,No,,46.575262,-81.181957
+Corbett Funeral Home Limited,95 Dundas St.,Cambridge,ON,,,Independent,No,,43.358942,-80.294390
+Courtice Funeral Chapel,1587 Highway #2,Courtice,ON,,,Independent,No,,43.909139,-78.794975
+Coutts Funeral Home & Cremation Centre,96 St. Andrews St.,Cambridge,ON,,,Independent,No,,43.354047,-80.322721
+Cremation & Celebrations,18 Eighty One Cr.,Grand Bend,ON,,,Independent,No,,43.312664,-81.757816
+Cremation & Celebrations,21574 Richmond St.,Arva,ON,,,Independent,No,,43.050476,-81.294887
+Cremation Society of Windsor and Essex County Inc.,3260 Dougall Avenue,Windsor,ON,,,Independent,No,,42.293605,-83.027204
+CremationHelp.ca,7 East Avenue South,Hamilton,ON,,,Independent,No,,43.252579,-79.855293
+Cresmount Funeral Home,322 Fennell Ave. East,Hamilton,ON,,,Independent,No,,43.234133,-79.864455
+Daley Family Funeral Home Ltd.,6971 Bank Street,Metcalfe,ON,,,Independent,No,,45.235556,-75.506013
+Darte Family Funeral and Cremation Centre,585 Carlton Street,St. Catharines,ON,,,Independent,No,,43.186465,-79.209360
+Davey-Linklater Funeral Home Ltd.,757 Princes St.,Kincardine,ON,,,Independent,No,,44.175283,-81.634130
+Davidson Funeral Home,135 Clarence St.,Port Colborne,ON,,,Independent,No,,42.886242,-79.255076
+De Stefano Funeral Home Services Inc.,1289 Keith Ross Drive,Oshawa,ON,,,Independent,No,,43.926814,-78.899636
+Delmoro Funeral Home,61 Beverly Hills Drive,Toronto,ON,,,Independent,No,,43.717844,-79.512605
+DeMarco Funeral Home (Keele Chapel) Inc.,3725 Keele St.,Toronto,ON,,,Independent,No,,43.756965,-79.488260
+DeMarco Funeral Home (Woodbridge Chapel) Inc.,8003 Weston Rd.,Woodbridge,ON,,,Independent,No,,43.784898,-79.592386
+Denning's Ltd.,183 Broad St.,Parkhill,ON,,,Independent,No,,43.164943,-81.685674
+Denning's Ltd.,32 Metcalfe St. West,Strathroy,ON,,,Independent,No,,42.966146,-81.591008
+Denning's Ltd.,232 Warwick St.,Watford,ON,,,Independent,No,,42.949307,-81.882121
+Denning's Ltd.,9 James St. South,Forest,ON,,,Independent,No,,43.094935,-82.001896
+Dixon-Garland Funeral Home,166 Main Street North,Markham,ON,,,Independent,No,,43.879407,-79.261140
+"Dods & McNair Funeral Home, Chapel & Reception Centre",21 First St.,Orangeville,ON,,,Independent,No,,43.921575,-80.097853
+Dodsworth & Brown Funeral Home,2241 New Street,Burlington,ON,,,PE,No,Park Lawn,43.333038,-79.791887
+Dodsworth & Brown Funeral Home,90 Garner Road East,Ancaster,ON,,,PE,No,Park Lawn,43.227681,-79.975341
+Donald V. Brown Funeral Home Limited,36 Lake Avenue Drive,Stoney Creek,ON,,,Independent,No,,43.219281,-79.756849
+Donohue Funeral Home,362 Waterloo Street,London,ON,,,Independent,No,,42.984369,-81.241687
+Downs and Son Funeral Home Ltd.,145 Queen Street West,Hepworth,ON,,,Independent,No,,44.633412,-81.138661
+Dreisinger Funeral Home Ltd.,62 Arthur St. South,Elmira,ON,,,Independent,Yes,,43.597828,-80.559548
+Drury Funeral Centre Ltd.,519 Victoria St. East,Alliston,ON,,,Independent,No,,44.159450,-79.842550
+Duffus Funeral Home Limited,431 George Street South,Peterborough,ON,,,Independent,No,,44.290768,-78.318584
+Dwayne D. Budgell Funeral Home Limited,1105 Rest Acres Road,Paris,ON,,,Independent,No,,43.184782,-80.388215
+Eagleson Funeral Home Ltd.,234 Palmerston Street,Southampton,ON,,,Independent,No,,44.493610,-81.371418
+Eaton Funeral Home Ltd.,385 Main St. West,Listowel,ON,,,Independent,No,,43.733125,-80.956077
+eco Cremation & Burial Services Inc.,"300 Welland Avenue, Unit 6",St. Catharines,ON,,,Independent,No,,43.157981,-79.244100
+eco Cremation & Burial Services Inc.,1105 Queensway East,Mississauga,ON,,,Independent,No,,43.591687,-79.588231
+Egan Funeral Home Inc.,203 Queen St. South,Bolton,ON,,,Independent,No,,43.875549,-79.732316
+"Elgin Mills Cemetery, Cremation and Funeral Centres",1591 Elgin Mills Rd. East,Richmond Hill,ON,,,Independent,No,,43.900495,-79.386999
+Elliot Lake Funeral Chapel & Cremation Centre,36 Ontario Avenue,Elliot Lake,ON,,,Independent,No,,46.383181,-82.644133
+Elliott-Madill Funeral Home Ltd.,22424 Adelaide Road,Mount Brydges,ON,,,Independent,No,,42.907172,-81.490594
+England Funeral Home Ltd.,294 Main St. South,Mount Forest,ON,,,Independent,No,,43.979550,-80.732009
+Erb & Good Family Funeral Home Limited,171 King St. South,Waterloo,ON,,,Independent,No,,43.460656,-80.520477
+Eric F. Nicholls Funeral Home Limited,639 Elgin St.,Wallaceburg,ON,,,Independent,No,,42.595739,-82.387224
+Essentials Cremation and Burial Services Inc.,221 Division Street,Welland,ON,,,Independent,No,,42.991813,-79.243811
+Essentials Cremation and Burial Services Inc.,4300 Drummond Road,Niagara Falls,ON,,,Independent,No,,43.111226,-79.098624
+Eternal Care Ltd.,3515 Coon's Rd.,Elizabethtown,ON,,,Independent,No,,44.645750,-75.778434
+Evans Funeral Home & Cremation Centre,648 Hamilton Road,London,ON,,,Independent,No,,42.979930,-81.209098
+Everest of Thunder Bay,114 1st Avenue NW,Geraldton,ON,,,Independent,No,,49.718875,-86.949317
+Everest of Thunder Bay,299 Waverley Street,Thunder Bay,ON,,,Independent,No,,48.436446,-89.224431
+Everest of Thunder Bay,420 Gore St. West,Thunder Bay,ON,,,Independent,No,,48.364004,-89.297766
+Falconer Funeral Homes,201 Suncoast Drive East,Goderich,ON,,,Independent,No,,43.732135,-81.701231
+Falconer Funeral Homes,153 High Street,Clinton,ON,,,Independent,No,,43.613723,-81.536500
+Families First Funeral Home & Tribute Centre,3260 Dougall Avenue,Windsor,ON,,,Independent,No,,42.250644,-82.999116
+Families First Funeral Home & Tribute Centre,1065 Lauzon Rd.,Windsor,ON,,,Independent,No,,42.328234,-82.940849
+Families First Funeral Home & Tribute Centre,2130 Front Rd.,Lasalle,ON,,,Independent,No,,42.227630,-83.102200
+Families First Funeral Home & Tribute Centre,585 Sandwich St. South,Amherstburg,ON,,,Independent,No,,42.090649,-83.107030
+Farhat & McGee Removals and Services Ltd.,120-317 Adelaide Street South,London,ON,,,Independent,No,,42.970976,-81.223833
+Faucher Memorial Care Centre,259 Rue St-Patrick Street,Ottawa,ON,,,Independent,No,,45.431356,-75.692567
+Fawcett Funeral Cremation Reception Ltd.,1 Highland Dr.,Flesherton,ON,,,Independent,No,,44.258898,-80.545511
+Fawcett Funeral Home Limited,182 Mill Street,Creemore,ON,,,Independent,No,,44.326697,-80.106311
+Fawcett Funeral Home Limited,82 Pine St.,Collingwood,ON,,,Independent,No,,44.500863,-80.218740
+Ferguson Funeral Home Inc.,48 Boucher Street East,Meaford,ON,,,Independent,No,,44.605336,-80.589325
+Ferris Funeral Home Limited,214 Norfolk St. South,Simcoe,ON,,,Independent,No,,44.501401,-79.703871
+First Memorial Funeral Services - Fairview Chapel,1411 Hunt Club Road,Ottawa,ON,,,Independent,No,,45.334112,-75.695382
+Forest Lawn Funeral Home & Cemetery,1997 Dundas Street East,London,ON,,,Independent,No,,42.983675,-81.249607
+Forrest & Taylor Funeral Home,20846 Dalton Rd.,Sutton,ON,,,PE,No,Park Lawn,44.305768,-79.363863
+Fraser-Morris & Heubner Funeral Home,5 Crawford Street,Cobden,ON,,,Independent,No,,45.625488,-76.881960
+Fratelli Vescio Funeral Homes Ltd.,8101 Weston Rd.,Woodbridge,ON,,,Independent,No,,43.784898,-79.592386
+Friscolanti Funeral Chapel Ltd.,43 Barton Street East,Hamilton,ON,,,Independent,No,,43.263742,-79.863959
+Funeral Co-operative of Ottawa Inc.,417 & 419 St. Laurent Blvd.,Ottawa,ON,,,Independent,No,,45.416229,-75.632814
+Futher-Franklin Funeral Home Ltd.,1172 Henry Street,Wellesley,ON,,,Independent,No,,43.478437,-80.766058
+G.H. Hogle Funeral Home Limited,63 Mimico Avenue,Toronto,ON,,,Independent,No,,43.613000,-79.492520
+Garafraxa Hill Funeral Home,251 Garafraxa St,Chatsworth,ON,,,Independent,No,,44.452157,-80.896817
+George Darte Funeral Chapel Inc.,585 Carlton Street,St. Catharines,ON,,,Independent,No,,43.186465,-79.209360
+George Funeral Home Ltd.,430 Mary Street,Wiarton,ON,,,Independent,No,,44.738513,-81.136686
+Gerald A. Smith Funeral Home Limited,197 King St. West,Harrow,ON,,,Independent,No,,42.035726,-82.922877
+Giffen-Mack & Trull Funeral Home,2570 Danforth Ave.,Toronto,ON,,,Independent,No,,43.688384,-79.301362
+Giffen-Mack Funeral Home & Cremation Centre,4115 Lawrence Ave. East,Toronto,ON,,,Independent,No,,43.766493,-79.194233
+Gilbert MacIntyre & Son Dublin Chapel,252 Dublin Street North,Guelph,ON,,,Independent,No,,43.548340,-80.258501
+Gilbert MacIntyre & Son Funeral Home Hart Chapel,1099 Gordon Street,Guelph,ON,,,Independent,No,,43.519299,-80.208260
+Glen Oaks Funeral Home & Cemetery,3164 Ninth Line,Oakville,ON,,,Independent,No,,43.510517,-79.700733
+Glendale Funeral Home & Cemetery,1810 Albion Road,Toronto,ON,,,Independent,No,,43.744597,-79.608658
+Glendinning Funeral Home Ltd.,246 Thames Street South,Ingersoll,ON,,,Independent,No,,43.035846,-80.880122
+Glendinning Funeral Home Ltd.,36 Front St.,Port Rowan,ON,,,Independent,No,,42.623613,-80.450178
+Glendinning Funeral Home Ltd.,69 Wellington St. North,Woodstock,ON,,,Independent,No,,43.132922,-80.755468
+Glendinning Funeral Home Ltd.,40 William Street,Plattsville,ON,,,Independent,No,,43.304992,-80.618459
+Glendinning Funeral Home Ltd.,77 Woodstock Street North,Tavistock,ON,,,Independent,No,,43.323254,-80.836386
+GMF Services,169 Dufferin St. South,New Tecumseth,ON,,,Independent,No,,44.147845,-79.862250
+Golden Horseshoe Services Ltd.,11-1163 King Rd.,Burlington,ON,,,Independent,No,,43.324892,-79.796684
+Gordon A. Monk Funeral Home Ltd.,127 Bobcaygeon Road,Minden,ON,,,Independent,No,,44.926272,-78.726189
+Gordon F. Tompkins Funeral Home,49 Colborne St.,Kingston,ON,,,Independent,No,,44.234471,-76.489055
+Gordon F. Tompkins Funeral Homes Township Chapel,435 Davis Dr.,Kingston,ON,,,Independent,No,,44.251559,-76.557712
+Goulet Funeral Home Ltd.,310 Argyle Street South,Renfrew,ON,,,Independent,No,,45.469423,-76.682512
+Graham A. Giddy Funeral Homes Ltd.,280 St. David St. South,Fergus,ON,,,Independent,No,,43.704614,-80.374559
+H. L. Cudney Funeral Home Inc.,241 West Main Street,Welland,ON,,,Independent,No,,42.990995,-79.256215
+H.A. Kebbel Funeral Home Limited,119 Talbot Street East,Aylmer,ON,,,Independent,No,,42.773061,-80.980499
+Haine Funeral Home & Chapel Inc.,26 Ormond Street South,Thorold,ON,,,Independent,No,,43.123046,-79.198733
+Haliburton Community Funeral Home,13523 Highway #118,Haliburton,ON,,,Independent,No,,45.061803,-78.521278
+Hannah Funeral Homes Ltd.,123 Dundas Street West,Napanee,ON,,,Independent,No,,44.244937,-76.955271
+Hannah Funeral Homes Ltd.,6689 Wheeler Street,Tamworth,ON,,,Independent,No,,44.486186,-76.991631
+Harbourview Funeral Centre,499 Cumberland St. North,Thunder Bay,ON,,,Independent,No,,48.449636,-89.196091
+Hardy-Lee Funeral Home,44 John St. South,Harriston,ON,,,Independent,No,,43.911031,-80.871670
+Harris Funeral Home Ltd.,220 St. James St.,London,ON,,,Independent,No,,42.997741,-81.254083
+Haskett Funeral Homes Ltd.,87 Goderich St. West,Seaforth,ON,,,Independent,No,,43.554939,-81.397653
+Haskett Funeral Homes Ltd.,456 Main St. South,Exeter,ON,,,Independent,No,,43.344231,-81.479781
+Haskett Funeral Homes Ltd.,49 Goshen St. North,Zurich,ON,,,Independent,No,,43.425464,-81.626084
+Haskett Funeral Homes Ltd.,223 Main St.,Lucan,ON,,,Independent,No,,43.190024,-81.408270
+Haycock-Cavanagh Funeral Home Inc.,409 Nelson Street,Wallaceburg,ON,,,Independent,No,,42.597049,-82.384879
+Hebrew Basic Burial,3429 Bathurst St.,Toronto,ON,,,Independent,No,,43.727606,-79.431484
+Hendren Funeral Home Ltd. (1987),66 Queen St.,Lakefield,ON,,,Independent,No,,44.425450,-78.272335
+Hendren Funeral Home Ltd. (2008),36 Queen St.,Norwood,ON,,,Independent,No,,44.382676,-77.975518
+Hendren Funeral Homes - Monk Chapel,6 Helen St.,Bobcaygeon,ON,,,Independent,No,,44.540604,-78.544469
+Henry Walser Funeral Home Ltd.,507 Frederick St.,Kitchener,ON,,,Independent,Yes,,43.458703,-80.470396
+Heritage Funeral Centre,50 Overlea Blvd,Toronto,ON,,,Independent,No,,43.707212,-79.345326
+Heritage Funeral Complex/Complexe Funéraire Inc.,1250 Trim Rd.,Ottawa,ON,,,Independent,No,,45.492087,-75.480808
+Heritage Funeral Homes Inc.,267 Main St. West,Palmerston,ON,,,Independent,No,,43.834170,-80.850595
+Heritage Funeral Homes Inc.,243 George St.,Arthur,ON,,,Independent,No,,43.830375,-80.534593
+Heritage Funeral Homes Inc.,20 Wellington St. South,Drayton,ON,,,Independent,No,,43.754500,-80.671903
+Hetherington & Deans Funeral Chapel,5176 Victoria Ave.,Niagara Falls,ON,,,Independent,No,,43.099236,-79.072813
+Heubner Funeral Home Barry's Bay Ltd.,43 Stafford St.,Barry's Bay,ON,,,Independent,No,,45.487178,-77.676599
+Highland Funeral Home,10 Cachet Woods Court,Markham,ON,,,Independent,No,,43.866729,-79.370164
+Highland Funeral Home,3280 Sheppard Avenue East,Toronto,ON,,,PE,No,Park Lawn,43.779176,-79.309729
+Highland Hills Funeral Home & Cemetery,12492 Woodbine Ave.,Gormley,ON,,,Independent,No,,43.947915,-79.380131
+Highland Park Funeral Centre,2510 Bensfort Rd.,Peterborough,ON,,,Independent,No,,44.279433,-78.310012
+Hill & Robinson Funeral Home & Cremation Centre Ltd.,30 Nelson Street,Brantford,ON,,,Independent,No,,43.142097,-80.266022
+Hillcrest Funeral Home Ltd.,151 Bond Street,Vankleek Hill,ON,,,Independent,No,,45.519467,-74.645658
+Hillside Funeral Services Ltd.,362 Airport Rd.,North Bay,ON,,,Independent,No,,46.334427,-79.465354
+Holy Cross Catholic Funeral Home,211 Langstaff Road E,Thornhill,ON,,,Independent,No,,43.821922,-79.473822
+Hulse & English Funeral Home & Chapel,75 Church St.,St. Catharines,ON,,,Independent,No,,43.161296,-79.245897
+"Hulse, Playfair & McGarry Inc.",805 Prescott Street,Kemptville,ON,,,PE,No,Hulse Playfair,45.010862,-75.637912
+"Hulse, Playfair & McGarry Inc.",472 Main Street,Winchester,ON,,,PE,No,Hulse Playfair,45.093782,-75.352148
+"Hulse, Playfair & McGarry Inc.",1200 Ogilvie Road,Ottawa,ON,,,PE,No,Hulse Playfair,45.426628,-75.629056
+"Hulse, Playfair & McGarry Inc.",315 McLeod Street,Ottawa,ON,,,PE,No,Hulse Playfair,45.412430,-75.691931
+"Hulse, Playfair & McGarry Inc.",150 Woodroffe Avenue,Ottawa,ON,,,PE,No,Hulse Playfair,45.376512,-75.775105
+Humphrey Funeral Home A.W. Miles - Newbigging Chapel Limited,1403 Bayview Ave.,Toronto,ON,,,Corporate,No,Mount Pleasant / SCI,43.702381,-79.373422
+Hyde & Mott Chapel,60 Main Street South,Hagersville,ON,,,Independent,No,,42.958952,-80.054796
+In Memoriam Funeral Services Inc.,28 Main St. North,Grand Valley,ON,,,Independent,No,,43.900085,-80.315991
+Innisfil Funeral Home,7910 Yonge St.,Innisfil,ON,,,PE,No,Park Lawn,44.325297,-79.619731
+Irvine Funeral Home and Chapel,4 James St. East,Brockville,ON,,,Independent,No,,44.592576,-75.685102
+Irvine Memorial Chapel at Roselawn,2451 County Rd. 15,Maitland,ON,,,Independent,No,,44.636104,-75.611904
+J.J. Patterson & Sons Funeral Residence,19 Young Street,Welland,ON,,,Independent,No,,42.989393,-79.250089
+J.W. Hart Funeral Home Inc.,113 Lock St. East,Dunnville,ON,,,Independent,No,,42.902721,-79.618563
+Jack & Thompson Funeral Home Inc.,318 Main Street East,Shelburne,ON,,,Independent,No,,44.079364,-80.199995
+Jackson & Barnard Funeral Home,233 Larch St.,Sudbury,ON,,,Independent,No,,46.491052,-80.988600
+James H. Sutton Funeral Home,401 Sandwich Street South,Amherstburg,ON,,,Independent,No,,42.097271,-83.107895
+"James Reid Funeral Home, Cremation and Reception Centre",1900 John Counter Blvd.,Kingston,ON,,,Independent,No,,44.257396,-76.480151
+Janisse Funeral Home,1139 Ouellette Avenue,Windsor,ON,,,Independent,No,,42.319847,-83.040473
+"Jardine Funeral Home, Cremation & Tribute Centre",8 Princes' St. West,Fenelon Falls,ON,,,Independent,No,,44.541656,-78.733470
+Jason Smith Funeral Chapel Ltd.,689 Norfolk St. North,Simcoe,ON,,,Independent,No,,44.501401,-79.703871
+Jenkens Funeral Home Cremation and Reception Centre,226 South Syndicate Avenue,Thunder Bay,ON,,,Independent,No,,48.381531,-89.247585
+Jerrett Funeral Homes,1141 St. Clair Avenue West,Toronto,ON,,,Corporate,No,Dignity Memorial / SCI,43.678042,-79.441594
+Jerrett Funeral Homes,660 Kennedy Rd.,Toronto,ON,,,Corporate,No,Dignity Memorial / SCI,43.725431,-79.265246
+John C. Badder Funeral Home,"PO Box 46, 72 Victoria Street",Thamesville,ON,,,Independent,No,,42.551807,-81.977119
+Jones Funeral Home Limited,11582 Trafalgar Rd.,Georgetown,ON,,,Independent,No,,43.640259,-79.937866
+Judson Funeral Home,3 Elgin St. South,Athens,ON,,,Independent,No,,44.625448,-75.951662
+Kane-Jerrett Funeral Homes,6191 Yonge Street,Toronto,ON,,,Corporate,No,Dignity Memorial / SCI,43.794523,-79.418996
+Kane-Jerrett Funeral Homes,8088 Yonge Street,Thornhill,ON,,,Corporate,No,Dignity Memorial / SCI,43.816570,-79.424607
+Keith Ovington Funeral Home Ltd.,134 King St.,Burford,ON,,,Independent,No,,43.103152,-80.430754
+Kelly Funeral Home,3000 Woodroffe Ave.,Nepean,ON,,,PE,No,Kelly,45.290470,-75.727672
+Kelly Funeral Home,2313 Carling Avenue,Ottawa,ON,,,PE,No,Kelly,45.368122,-75.776555
+Kelly Funeral Home,585 Somerset Street West,Ottawa,ON,,,PE,No,Kelly,45.412795,-75.703397
+Kelly Funeral Home,1255 Walkley Road,Ottawa,ON,,,PE,No,Kelly,45.371848,-75.660480
+Kelly Funeral Home-Kanata Chapel,580 Eagleson Road,Kanata,ON,,,PE,No,Kelly,45.289884,-75.869864
+Kendrick Funeral Home Ltd.,91 Division St. South,Kingsville,ON,,,Independent,No,,42.034703,-82.739654
+Kendrick Funeral Home Ltd.,4 Victoria Ave.,Chatham,ON,,,Independent,No,,42.408197,-82.185918
+Kendrick Funeral Home Ltd.,17 Little St. South,Wheatley,ON,,,Independent,No,,42.095071,-82.463020
+Kennedy Funeral Home Limited,128 Talbot Street North,Essex,ON,,,Independent,No,,42.175263,-82.822659
+Kerry Funeral Home Ltd.,140 Churchill Ave.,Wawa,ON,,,Independent,No,,47.988391,-84.778717
+King Funeral Home Ltd.,122 Main St.,Schreiber,ON,,,Independent,No,,48.808514,-87.270380
+Kitchener Funeral Homes & Crematorium Inc.,3 Forwell Rd.,Kitchener,ON,,,Independent,No,,43.472436,-80.437651
+"Kitching, Steepe & Ludwig Funeral Home Limited",146 Mill Street North,Waterdown,ON,,,Independent,No,,43.337380,-79.895746
+Knight Funeral Home Ltd.,588 St. Clair Parkway,Corunna,ON,,,Independent,No,,42.872179,-82.457303
+Kopriva Taylor Community Funeral Home Inc.,64 Lakeshore Rd. West,Oakville,ON,,,PE,No,Park Lawn,43.440353,-79.673825
+L.G. Wallace Funeral Home,151 Ottawa Street North,Hamilton,ON,,,Independent,No,,43.247204,-79.818040
+Lahaie & Sullivan Cornwall Funeral Home - East Branch,614 First Street East,Cornwall,ON,,,Independent,No,,45.020385,-74.715500
+Lahaie & Sullivan Cornwall Funeral Home - West Branch,20 Seventh Street West,Cornwall,ON,,,Independent,No,,45.025348,-74.733826
+Lakeland Funeral & Cremation Centre,19 Moose Rd.,Lindsay,ON,,,Independent,No,,44.345938,-78.762834
+Lampman Funeral Home,724 Canboro Road,Fenwick,ON,,,Independent,No,,43.027175,-79.353918
+Lannin Funeral Home,32 Main Street East,Smiths Falls,ON,,,Independent,No,,44.900059,-76.019803
+LeClair Cremation Centre,565 King St.,Midland,ON,,,Independent,No,,44.739226,-79.876104
+Legacy Funeral and Cremation Services Inc.,600-55 Cedar Pointe Dr.,Barrie,ON,,,Independent,No,,44.379031,-79.713908
+Les Maisons Funéraires Génier Gauthier,70 7th Avenue South,Cochrane,ON,,,Independent,No,,50.630898,-82.191444
+Life Transitions Burial and Cremation Service Inc.,825 Park Ave. West,Chatham,ON,,,Independent,No,,42.379372,-82.202912
+Life Transitions Burial and Cremation Service Inc.,397 McNaughton Avenue West,Chatham,ON,,,Independent,No,,42.405507,-82.214063
+Lockhart Funeral Home Ltd.,109 Montreal Street,Mitchell,ON,,,Independent,No,,43.467835,-81.194934
+Logan Funeral Home & Cremation Centre,371 Dundas Street,London,ON,,,Independent,No,,42.985600,-81.240988
+Logan's of Parry Sound,81 James St.,Parry Sound,ON,,,Independent,No,,45.345828,-80.033462
+Lotus Funeral and Cremation Centre Inc.,121 City View Drive,Etobicoke,ON,,,Independent,Yes,,43.702519,-79.588212
+Lougheed Funeral Home,252 Regent St. South,Sudbury,ON,,,Independent,No,,46.492720,-80.991211
+Lougheed Funeral Home,4605 Michelle Dr.,Hanmer,ON,,,Independent,No,,46.653453,-80.965390
+Lounsbury Funeral Home,1766 Franklin Blvd.,Cambridge,ON,,,Independent,No,,43.429655,-80.309368
+Low & Low Limited,1763 Reach Street,Port Perry,ON,,,Independent,No,,44.112107,-78.953284
+Low & Low Limited,23 Main Street South,Uxbridge,ON,,,Independent,No,,44.108572,-79.119876
+Lynett Funeral Home,3299 Dundas St. West,Toronto,ON,,,Independent,No,,43.665432,-79.480283
+Lynn-Stone Funeral Homes Inc.,15 Yonge St. South,Elmvale,ON,,,Independent,No,,44.582677,-79.865139
+Lyons Funeral Home,51 Concession Street,Westport,ON,,,Independent,No,,44.675612,-76.398272
+M. G. Daly Funeral Home Ltd.,200 Old Hastings Rd.,Maynooth,ON,,,Independent,No,,45.222550,-77.934074
+M.A. Clark & Sons Funeral Home Limited,567 Upper Wellington St.,Hamilton,ON,,,Independent,No,,43.238435,-79.866324
+M.J. Smith & Son Funeral Home Inc.,78 Centre St.,Deseronto,ON,,,Independent,No,,44.195538,-77.048500
+M.W. Becker Funeral Home,490 The Queensway South,Keswick,ON,,,PE,No,Park Lawn,44.221421,-79.466131
+MacCoubrey Funeral Home Limited,11 King St. West,Colborne,ON,,,Independent,No,,44.004705,-77.888787
+MacCoubrey Funeral Home Limited,30 King St. East,Cobourg,ON,,,Independent,No,,43.960498,-78.164243
+MacKay Funeral Home,416 Dibble St. West,Prescott,ON,,,Independent,No,,44.708845,-75.519548
+MacKenzie & McCreath Funeral Homes - Lucknow,595 Campbell Street,Lucknow,ON,,,Independent,No,,43.961258,-81.515602
+MacKenzie & McCreath Funeral Homes - Ripley,12 Queen Street,Ripley,ON,,,Independent,No,,44.072536,-81.581736
+Mackey Funeral Home Inc.,33 Peel St.,Lindsay,ON,,,Independent,No,,44.355673,-78.739667
+MacKinnon & Bowes Limited,2 Meridian Rd.,Toronto,ON,,,Independent,No,,43.682713,-79.581778
+MacKinnon Family Funeral Home,55 Mill St. East,Acton,ON,,,Independent,No,,43.631240,-80.039983
+Maison Funéraire Kelly Funeral Home-Orléans,2370 St. Joseph Boulevard,Orleans,ON,,,PE,No,Kelly,45.468419,-75.529240
+Maison Funéraire Lamarre & Fils / Lamarre & Son Funeral Home,453 St. Philippe St.,Alfred,ON,,,PE,No,Kelly,45.557326,-74.884285
+Maison Funéraire Lessard Funeral and Cremation Centre Inc.,21 Elm St. South,Timmins,ON,,,PE,No,Kelly,48.475847,-81.334827
+Maison Funéraire Racine Robert & Gauthier Funeral Home,180 Montreal Road,Ottawa,ON,,,PE,No,Kelly,45.434884,-75.664097
+"Malcolm, Deavitt & Binhammer",141 Renfrew St.,Pembroke,ON,,,PE,No,Park Lawn,45.824828,-77.114992
+Mangan Funeral Home,332 Osborne Street,Beaverton,ON,,,Independent,No,,44.428430,-79.153271
+Mark Jutzi Funeral Home Ltd.,7 Spencer Street,Milverton,ON,,,Independent,No,,43.569126,-80.918318
+Mark Jutzi Funeral Home Ltd.,291 Huron Street,New Hamburg,ON,,,Independent,No,,43.376858,-80.714209
+Markey-Dermody Funeral Home,1774 King St. East,Hamilton,ON,,,Independent,No,,43.232182,-79.811867
+"Marlatt Funeral Home, Swackhamer Chapel",195 King St. West,Dundas,ON,,,Independent,No,,43.267532,-79.962059
+Marsden McLaughlin Funeral Homes Ltd.,10 Beach St.,Iroquois,ON,,,Independent,No,,44.849283,-75.315108
+Marsden McLaughlin Funeral Homes Ltd.,62 Queen Street,Chesterville,ON,,,Independent,No,,45.103291,-75.233207
+Marsden McLaughlin Funeral Homes Ltd.,12318 County Road #18,Williamsburg,ON,,,Independent,No,,44.971393,-75.249410
+Marsden McLaughlin Funeral Homes Ltd.,2065 Dundas Street,Cardinal,ON,,,Independent,No,,44.786995,-75.380940
+Marshall Funeral Home,10366 Yonge Street,Richmond Hill,ON,,,Independent,No,,43.879974,-79.441121
+Marshall W. Driver Cremation & Burial Service,19 Ross St.,Barrie,ON,,,Independent,No,,44.390596,-79.693149
+Martyn Funeral Home Inc.,464 Wyld St,North Bay,ON,,,Independent,No,,46.312320,-79.454237
+Maurice J. Verhoeve Funeral Homes - Burial and Cremation Services Inc.,262 Broadway St. Upper,Tillsonburg,ON,,,Independent,No,,42.859494,-80.726501
+Maurice J. Verhoeve Funeral Homes - Burial and Cremation Services Inc.,40 Queen St.,Langton,ON,,,Independent,No,,42.741929,-80.577675
+McBurney Funeral Home Ltd.,35 Patrick St West,Wingham,ON,,,Independent,No,,43.888589,-81.312959
+McCallum & Palla Funeral Home,11 Cambria Rd. North,Goderich,ON,,,Independent,No,,43.743263,-81.704763
+McCleister Funeral Home,495 Park Road North,Brantford,ON,,,Independent,No,,43.181307,-80.249547
+"McCormack Aquamation, Burial & Cremation Services",254 George St.,Sarnia,ON,,,Independent,No,,42.974521,-82.401462
+McCulloch-Watson Funeral Home Ltd.,166 Bruce Street North,Durham,ON,,,Independent,No,,44.177118,-80.823530
+McDougall & Brown Funeral Home,2900 Kingston Rd.,Toronto,ON,,,Independent,No,,43.723672,-79.234558
+McEachnie Funeral Home,28 Old Kingston Rd.,Ajax,ON,,,Independent,No,,43.854413,-79.057276
+McEvoy-Shields Funeral Home & Chapel,1411 Hunt Club Road,Ottawa,ON,,,Independent,No,,45.334112,-75.695382
+McFarlane & Roberts Funeral Home Limited,2240 Wharncliffe Rd. South,London,ON,,,Independent,No,,42.917955,-81.283866
+McGuinty Funeral Home Limited,123 Railway Street,Sturgeon Falls,ON,,,Independent,No,,46.364717,-79.924629
+McGuinty Funeral Home Limited,591 Cassells Street,North Bay,ON,,,Independent,No,,46.318264,-79.443985
+McIntosh-Anderson-Kellam Funeral Home Ltd.,152 King St. East,Oshawa,ON,,,PE,No,Arbor Memorial,43.898975,-78.858103
+McKersie & Early Funeral Home Ltd.,114 Main Street East,Milton,ON,,,Independent,No,,43.510943,-79.885228
+McKinlay Funeral Home,141 Park Street,Blenheim,ON,,,Independent,No,,42.333234,-82.002315
+McKinlay Funeral Home,459 St. Clair Street,Chatham,ON,,,Independent,No,,42.418174,-82.203627
+McKinlay Funeral Home,76 Main Street East,Ridgetown,ON,,,Independent,No,,42.439235,-81.887051
+McMillan & Jack Funeral Home Limited,291 Main Street,Dundalk,ON,,,Independent,No,,44.171149,-80.389374
+Meadowvale Funeral Centre,7732 Mavis Rd.,Brampton,ON,,,Independent,No,,43.639954,-79.732964
+Melady Funeral Home,572 Notre Dame St.,Belle River,ON,,,Independent,No,,42.293099,-82.709866
+Memorial Funeral Home,1559 Fanshawe Park Road E.,London,ON,,,Independent,No,,43.044738,-81.220900
+Memory Gardens Funeral Home & Cemetery,2723 Victoria Street North,Breslau,ON,,,Independent,No,,43.479942,-80.421581
+Menard Funeral Home Inc.,72 Lakeside Ave.,Blind River,ON,,,Independent,No,,46.182868,-82.961000
+Merritt Funeral Home Inc.,287 Station St.,Smithville,ON,,,Independent,Yes,,43.102854,-79.545361
+Mighton Funeral Home Ltd.,123 10th St.,Hanover,ON,,,Independent,No,,44.151350,-81.034343
+Milestone Cremation Services Inc.,540 Milligan Lane,Napanee,ON,,,Independent,No,,44.260767,-76.954746
+Milestone Funeral Homes Inc.,11928 Highway 41,Northbrook,ON,,,Independent,No,,44.717828,-77.159681
+Milestone Funeral Homes Inc.,11014 Rd. 38,Parham,ON,,,Independent,No,,44.656195,-76.713308
+Mill Valley Funeral & Cremation Centre,35 King St. West,Millbrook,ON,,,Independent,No,,44.149319,-78.453529
+Miller Funeral Chapel Limited,28 Caithness St. East,Caledonia,ON,,,Independent,No,,43.073718,-79.950778
+Mitchell Funeral Home,"15 High Street, Unit 1",Huntsville,ON,,,Independent,No,,45.326392,-79.218434
+Modest Cremation,195 King St. W.,Dundas,ON,,,Independent,No,,43.267532,-79.962059
+Morgan Funeral Home,415 Regent St.,Niagara-On-The-Lake,ON,,,Independent,No,,43.250788,-79.077159
+Morley Bedford Funeral Services,159 Eglinton Ave. West,Toronto,ON,,,PE,No,Park Lawn,43.705374,-79.403863
+Morse & Son Funeral Home,5917 Main St.,Niagara Falls,ON,,,Independent,No,,43.088629,-79.092614
+Mount Lawn Funeral Home & Cemetery,21 Garrard Rd,Whitby,ON,,,Independent,No,,43.890209,-78.903447
+Mount Pleasant Cemetery (London) Inc.,303 Riverside Dr,London,ON,,,Corporate,No,Mount Pleasant / SCI,42.982031,-81.275550
+Mount Pleasant Funeral Centre,375 Mount Pleasant Rd.,Toronto,ON,,,Corporate,No,Mount Pleasant / SCI,43.697285,-79.385944
+Mundell Funeral Home Limited,79 West St. North,Orillia,ON,,,PE,No,Park Lawn,44.610499,-79.421723
+Munro & Morris Funeral Homes Ltd.,46 Oak St.,Lancaster,ON,,,Independent,No,,45.138600,-74.504019
+Munro & Morris Funeral Homes Ltd.,20 Main St.,Maxville,ON,,,Independent,No,,45.289173,-74.856310
+Munro & Morris Funeral Homes Ltd.,114 Main St. South,Alexandria,ON,,,Independent,No,,45.307657,-74.633978
+Murphy Funeral Home,159 Talbot Road,Delhi,ON,,,Independent,No,,42.856882,-80.500435
+Murphy Funeral Home and Chapel Ltd.,296 Isabella Street,Pembroke,ON,,,Independent,No,,45.822557,-77.118608
+Needham Funeral Service,520 Dundas St.,London,ON,,,Independent,No,,42.987962,-81.235170
+Needham-Jay Funeral Home,4059 Petrolia Line,Petrolia,ON,,,Independent,No,,42.882029,-82.156098
+Neuman Family Funeral Home Ltd.,38 Bridge St. West,Bancroft,ON,,,Independent,No,,45.056322,-77.855906
+Neville Funeral Home,491 Isabella St.,Pembroke,ON,,,Independent,No,,45.823139,-77.125660
+New Haven Funeral Centre Inc.,7025 Legion Rd,Mississauga,ON,,,Independent,No,,43.709725,-79.636523
+Newcastle Funeral Home Ltd.,386 Mill St. South,Newcastle,ON,,,Independent,No,,43.912486,-78.587097
+Newediuk Funeral Home,2058 Kipling Ave.,Toronto,ON,,,Independent,No,,43.713882,-79.568564
+Nicholls Funeral Home,330 Midland Avenue,Midland,ON,,,Independent,No,,44.748863,-79.882680
+Nisbett Funeral Home,600 Monaghan Rd. South,Peterborough,ON,,,Independent,No,,44.212239,-78.172024
+Northcutt Elliott Funeral Home,53 Division St. North,Bowmanville,ON,,,PE,No,Arbor Memorial,43.914071,-78.686307
+Northridge Funeral Home Ltd.,6446 Hwy 11 West,Emo,ON,,,Independent,No,,48.631978,-93.833917
+Northview Funeral Home & Cremation Centre,1490 Highbury Ave. North,London,ON,,,Independent,No,,42.978032,-81.194628
+Northwood Funeral Home Cremation And Reception Centre Inc.,942 Great Northern Rd.,Sault Ste. Marie,ON,,,Independent,No,,46.555388,-84.318838
+Oakview Funeral Home,56 Lakeshore Road West,Oakville,ON,,,Independent,No,,43.440571,-79.673334
+Ogden Funeral Homes Limited,4164 Sheppard Ave E,Scarborough,ON,,,Independent,No,,43.785055,-79.280511
+One Step Cremation,211 McNaughton Road East,Maple,ON,,,Independent,No,,43.859495,-79.506897
+O'Neil Funeral Home (London) Limited,350 William St.,London,ON,,,Independent,No,,42.986378,-81.233186
+O'Neill Funeral Home Limited,6324 Main St.,Stouffville,ON,,,Independent,No,,43.971314,-79.246364
+Opatovsky Funeral Home Ltd.,210 Ontario St.,Burks Falls,ON,,,PE,No,Park Lawn,45.619824,-79.411839
+Opatovsky Funeral Home Ltd.,9 Paget St.,Sundridge,ON,,,PE,No,Park Lawn,45.771214,-79.392070
+Oshawa Funeral Home,847 King Street West,Oshawa,ON,,,Independent,No,,43.889641,-78.895437
+Ostrander's Funeral Home Limited,43 Bidwell St.,Tillsonburg,ON,,,Independent,No,,42.858723,-80.728031
+O'Sullivan Funeral Home & Cremation Centre,215 St. James St.,Sault Ste. Marie,ON,,,Independent,No,,46.520955,-84.345842
+Ottawa Cremation Service Inc.,1803 St. Joseph Blvd.,Ottawa,ON,,,Independent,No,,45.462064,-75.547906
+P.X. Dermody Funeral Home (East Ave),7 East Avenue South,Hamilton,ON,,,Independent,No,,43.252579,-79.855293
+P.X. Dermody Funeral Home (Upper Gage),796 Upper Gage Avenue,Hamilton,ON,,,Independent,No,,43.220193,-79.842622
+P.X. Dermody Funeral Home And Burial Help,1919 King Street East,Hamilton,ON,,,Independent,No,,43.231727,-79.806353
+Passages Eco Conscious Cremation and Burial Inc.,336 Speedvale Ave. West,Guelph,ON,,,Independent,No,,43.542016,-80.289603
+Patterson Funeral Home Ltd.,6062 Main Street,Niagara Falls,ON,,,Independent,No,,43.086928,-79.091508
+Paul F. Kent Funeral Home Ltd.,16 King Street North,Cookstown,ON,,,Independent,No,,44.191629,-79.702240
+Paul G. Payne Funeral Home,178 Main St.,Odessa,ON,,,Independent,No,,44.277119,-76.715756
+Paul O'Connor Funeral Home,1939 Lawrence Ave. East,Toronto,ON,,,Independent,No,,43.744427,-79.298335
+Peaceful Transition Simcoe,431 Bayview Dr,Barrie,ON,,,PE,No,Park Lawn,44.343974,-79.676945
+Peaceful Transition York,2-15236 Yonge Street,Aurora,ON,,,PE,No,Park Lawn,43.999730,-79.467545
+Pelham Funeral Home Ltd.,1292 Pelham Street,Fonthill,ON,,,Independent,No,,43.034079,-79.285442
+Penetanguishene Funeral Home,155 Main Street,Penetanguishene,ON,,,Independent,No,,44.765868,-79.931009
+Pilon Family Funeral Home and Chapel Ltd.,50 John St. North,Arnprior,ON,,,Independent,No,,45.432272,-76.356615
+Pine Hills Funeral Centre,625 Birchmount Rd.,Scarborough,ON,,,Independent,No,,43.694212,-79.262798
+Pinnacle Cremation Services Ltd.,32 Prince Street East,Renfrew,ON,,,Independent,No,,45.730056,-77.279370
+Pleasantview Funeral Home & Cemetery,2250 Hwy #20,Thorold,ON,,,Independent,No,,43.062134,-79.248849
+Queen of Heaven Catholic Funeral Home,7300 Highway 27,Woodbridge,ON,,,Independent,No,,43.800484,-79.628605
+Quinte Cremation and Burial Services,53 Wilson Ave.,Belleville,ON,,,Independent,No,,44.165798,-77.405340
+Raney Funeral Chapel Inc.,10 Toronto Ave.,South River,ON,,,Independent,No,,45.839746,-79.377128
+Reaume Funeral Home Inc.,6 Canal St. West,Tilbury,ON,,,Independent,No,,42.258964,-82.433050
+Red Lake Chapel Ltd.,214 Howey Street,Red Lake,ON,,,Independent,No,,51.018104,-93.827861
+Reid Funeral Home Limited,87 Maidstone Ave. East,Essex,ON,,,Independent,No,,42.235414,-82.712011
+Reid Funeral Home Limited,14 Russell Street,Leamington,ON,,,Independent,No,,42.051234,-82.601206
+Reynolds Funeral Home,1 Mary St.,Bracebridge,ON,,,PE,No,Park Lawn,45.042547,-79.312796
+Rhody Family Funeral Home Inc.,65 Fourth Street S.W.,Chesley,ON,,,Independent,No,,44.298740,-81.095289
+Riverside Funeral Home Inc.,401 Albert Street,Brussels,ON,,,Independent,No,,43.743167,-81.246942
+Riverside Funeral Services,347 Lindsay St. South,Lindsay,ON,,,Independent,No,,44.334606,-78.725580
+Roadhouse & Rose Funeral Home,157 Main Street South,Newmarket,ON,,,Independent,No,,44.054325,-79.457928
+Robert J. Reid & Sons Funeral Home,309 Johnson Street,Kingston,ON,,,Independent,No,,44.231241,-76.491433
+Rod Abrams Funeral Home Limited,1666 Tottenham Road,Tottenham,ON,,,Independent,No,,44.014731,-79.804828
+Rosar-Morrison Funeral Home & Chapel,467 Sherbourne St.,Toronto,ON,,,Independent,No,,43.666558,-79.374018
+Rushnell Funeral Homes Inc.,130 Main St. West,Brighton,ON,,,Independent,No,,44.042228,-77.737007
+Rushnell Funeral Homes Inc.,80 Highland Avenue,Belleville,ON,,,Independent,No,,44.161525,-77.389909
+Rushnell Funeral Homes Inc.,9 Bursthall St.,Marmora,ON,,,Independent,No,,44.483969,-77.681524
+Rushnell Funeral Homes Inc.,137 Colborne St.,Tweed,ON,,,Independent,No,,44.476829,-77.310327
+Rushnell Funeral Homes Inc.,60 Division St.,Trenton,ON,,,Independent,No,,44.101633,-77.579306
+Rushnell Funeral Homes Inc.,112 Durham St. South,Madoc,ON,,,Independent,No,,44.503725,-77.472620
+Rushnell Funeral Homes Inc.,33 Main St. West,Picton,ON,,,Independent,No,,44.007707,-77.141174
+Rutherford Cremation and Funeral Services,804 Ontario St. Unit C-11,Stratford,ON,,,Independent,No,,43.370090,-80.981802
+Salon Funéraire Familial Berthiaume Family Funeral Home Inc.,416 McGill St.,Hawkesbury,ON,,,Independent,No,,45.606745,-74.615149
+Salon Funéraire Guenette Funeral Home Inc.,108 Byng Avenue,Kapuskasing,ON,,,Independent,No,,49.421098,-82.425893
+Salon Funéraire M. John Sullivan Funeral Home,341 Pitt St.,Cornwall,ON,,,Independent,No,,45.020848,-74.729967
+"Salon Funéraire Miron-Wilson Funeral Home, Cremation and Reception Centre Ltd.",150 Balsam St. South,Timmins,ON,,,Independent,No,,48.477473,-81.330414
+Salon Funéraire Théorêt-Bourgeois Funeral Home Inc.,119 King St.,Sturgeon Falls,ON,,,Independent,No,,46.354436,-79.929678
+Salon Funéraire Théorêt-Bourgeois Funeral Home Inc.,2 Racette St.,Verner,ON,,,Independent,No,,46.410369,-80.124266
+Salons Funeraires Irvine & Irvine Funeral Homes,70 Seventh Ave. South,Cochrane,ON,,,Independent,No,,50.630898,-82.191444
+Salons Funeraires Irvine & Irvine Funeral Homes,641 De Troyes Avenue,Iroquois Falls,ON,,,Independent,No,,48.758741,-80.681054
+Sargent & Son Funeral Chapel,21 N. Court Street,Thunder Bay,ON,,,Independent,No,,49.776695,-86.529635
+Scotland Funeral Home Limited,27 Main Street,Elgin,ON,,,Independent,No,,44.608371,-76.220663
+Scott Funeral Home,289 Main Street North,Brampton,ON,,,Independent,No,,43.691889,-79.768236
+Scott Funeral Home,420 Dundas St. East,Mississauga,ON,,,Independent,No,,43.588881,-79.606292
+Scott Funeral Home,1273 Weston Rd.,Toronto,ON,,,Independent,No,,43.689093,-79.494645
+Scott Funeral Home,7776 Kipling Ave.,Woodbridge,ON,,,Independent,No,,43.778792,-79.597477
+Serenity Burial & Cremation Services Inc.,361 Main Street,Port Dover,ON,,,Independent,No,,42.786879,-80.204044
+Services Funéraire Fournier Funeral Services,715 Edward Street,Hearst,ON,,,Independent,No,,49.685417,-83.663018
+Shawn Jackson Funeral Home Ltd.,31 Elgin Street,St. Thomas,ON,,,Independent,No,,42.777282,-81.198039
+Sifton Funeral Home Limited,118 Wellington Street,St. Thomas,ON,,,Independent,No,,42.774948,-81.192915
+Simcoe Funeral Home,38 James St. East,Orillia,ON,,,Independent,No,,44.599859,-79.408689
+Simple Choice Cremation,2 Jane Street,Toronto,ON,,,Independent,No,,43.649424,-79.484705
+Simple Choice Cremation,15 West Ave. North,Hamilton,ON,,,Independent,No,,43.253531,-79.858122
+Simple Wishes of the North Inc.,1106 Kingsway,Sudbury,ON,,,Independent,No,,46.501640,-80.960516
+Sioux Lookout Funeral Home Limited,128 Front Street,Sioux Lookout,ON,,,Independent,No,,50.098050,-91.928464
+Skwarchuk Funeral Home,30 Simcoe Rd,Bradford,ON,,,Independent,No,,44.113453,-79.564722
+Skwarchuk Funeral Home,19153 Centre St.,Mount Albert,ON,,,Independent,No,,44.136711,-79.308270
+Smith Funeral Home,1576 London Line,Sarnia,ON,,,Independent,No,,42.984238,-82.337447
+Smith Funeral Home - McKenzie Blundy Chapel,431 Christina St. N.,Sarnia,ON,,,Independent,No,,42.980812,-82.403071
+Smith's Funeral Service (Burlington) Limited,485 Brant Street,Burlington,ON,,,Independent,No,,43.327362,-79.800066
+Smith's Funeral Service (Burlington) Limited,1167 Guelph Line,Burlington,ON,,,Independent,No,,43.356479,-79.809125
+Smith's Funeral Service (Grimsby) Limited,11 Mountain Street,Grimsby,ON,,,Independent,No,,43.193171,-79.562451
+Smith's Funeral Service (Stoney Creek) Limited,454 Highway #8,Stoney Creek,ON,,,Independent,No,,43.223781,-79.745691
+Steadman Brothers Funeral Chapels,3040 Bridgen Road,Brigden,ON,,,Independent,No,,42.811921,-82.282808
+Steckley-Gooderham Inc.,30 Worsley Street,Barrie,ON,,,Independent,No,,44.391921,-79.690709
+Steele Funeral Home,30 Moira Street West,Belleville,ON,,,Independent,No,,44.168653,-77.388479
+Steeles Memorial Chapel,350 Steeles Avenue West,Thornhill,ON,,,Independent,No,,43.795874,-79.432941
+Stinson Funeral Home Ltd.,100 Bruce Avenue,South Porcupine,ON,,,Independent,No,,48.478109,-81.209561
+Stoddart Funeral Home & Cremation Centre,24 Mill Street,Lindsay,ON,,,Independent,No,,44.354499,-78.732558
+Styres Funeral Home (1985),1798 Fourth Line,Ohsweken,ON,,,Independent,No,,43.068735,-80.117991
+T. Harry Hoffman & Sons Limited,118 Dashwood Main St.,Dashwood,ON,,,Independent,No,,43.346569,-81.630541
+T. Little Funeral Home & Cremation Centre,223 Main St.,Cambridge,ON,,,Independent,No,,43.356491,-80.304155
+Tallman Funeral Homes Limited,3277 King Street,Vineland,ON,,,Independent,No,,43.149382,-79.387250
+Taylor Funeral Home,524 Davis Drive,Newmarket,ON,,,Independent,No,,44.060029,-79.456577
+The Arn-Lockie Funeral Home Ltd.,45 Main St. West,Norwich,ON,,,Independent,No,,42.987151,-80.599082
+The Simple Alternative Funeral Centres,275 Lesmill Rd.,Toronto,ON,,,Independent,No,,43.762653,-79.359882
+The Simple Alternative Funeral Centres,1535 South Gateway Rd.,Mississauga,ON,,,Independent,No,,43.632535,-79.615548
+The Simple Alternative Funeral Centres,1057 Brock Rd.,Pickering,ON,,,Independent,No,,43.836312,-79.068912
+The United Hebrew Memorial Chapel of Hamilton,28 Ewen Road,Hamilton,ON,,,Independent,No,,43.255848,-79.931950
+Théo Brunet & Fils Ltée./Sons Ltd.,2419 Laurier Street,Rockland,ON,,,Independent,No,,45.545456,-75.295392
+Thomas C. Whitcroft Funeral Home & Chapel,814 Bruce Road 8,Sauble Beach,ON,,,Independent,No,,44.630625,-81.235692
+Thompson Funeral Home,530 Industrial Pkwy South,Aurora,ON,,,Independent,No,,44.000100,-79.456860
+Thompson Waters Funeral Home Ltd.,102 First Ave. Port Dover,Port Dover,ON,,,Independent,No,,42.784571,-80.200517
+Thompson-Mott Funeral Home Inc.,62 Main Street North,Waterford,ON,,,Independent,No,,42.939493,-80.293312
+Thorne Funeral Home,109 Laidlaw Street South,Cannington,ON,,,Independent,No,,44.346945,-79.037311
+Thornton Funeral Centre,1200 Thornton Rd N,Oshawa,ON,,,Independent,No,,43.922175,-78.906846
+Thorpe Brothers Funeral Home & Chapel,96 West St.,Brantford,ON,,,Independent,No,,43.143208,-80.267213
+Tiffin Funeral Home Inc.,4 Clinton St. South,Teeswater,ON,,,Independent,No,,43.998892,-81.287090
+Timiskaming Funeral Cooperative Inc.,111 Burnside Dr.,Kirkland Lake,ON,,,Independent,No,,48.157254,-80.022628
+Toll Funeral Home,55 Charing Cross St.,Brantford,ON,,,Independent,No,,43.161202,-80.269519
+Tompkins Funeral Home,63 Garden St.,Gananoque,ON,,,Independent,No,,44.329755,-76.163900
+Torrance Funeral Home & Chapel Limited,89 Bowes Street,Parry Sound,ON,,,Independent,No,,45.342328,-80.017342
+Tranquility Burial & Cremation Services Inc.,1666 King St E,Cambridge,ON,,,Independent,No,,43.388516,-80.344137
+Tranquility Funeral Services,2390 Haines Rd,Mississauga,ON,,,Independent,No,,43.593363,-79.590992
+Tri-City Cremation Services,383 Elgin St. North,Cambridge,ON,,,Independent,No,,43.379013,-80.306322
+Trousdale Funeral Home Ltd.,4374 Mill St.,Sydenham,ON,,,Independent,No,,44.409230,-76.596530
+Tubman Funeral Homes,115 Rivington St.,Carp,ON,,,PE,No,Tubman,45.343240,-76.032451
+Tubman Funeral Homes,3440 Richmond Rd.,Ottawa,ON,,,PE,No,Tubman,45.337829,-75.809249
+Tubman Funeral Homes,403 Richmond Rd.,Ottawa,ON,,,PE,No,Tubman,45.391004,-75.756801
+Tubman Funeral Homes,1610 Roger Stevens Dr.,Kars,ON,,,PE,No,Tubman,45.155913,-75.657120
+Turner & Porter Funeral Directors Limited,2180 Hurontario St.,Mississauga,ON,,,PE,No,Turner & Porter,43.571979,-79.604810
+Turner & Porter Funeral Directors Limited,4933 Dundas Street West,Toronto,ON,,,PE,No,Turner & Porter,43.648041,-79.528976
+Turner & Porter Funeral Directors Limited,1981 Dundas St W,Mississauga,ON,,,PE,No,Turner & Porter,43.536767,-79.666516
+Turner & Porter Funeral Directors Limited,2357 Bloor Street West,Toronto,ON,,,PE,No,Turner & Porter,43.649771,-79.481235
+Turner Family Funeral Home Ltd.,53 Main Street,Dundas,ON,,,Independent,No,,43.264415,-79.952527
+Valley Funeral Home,33337 Hwy #17,Deep River,ON,,,Independent,No,,46.097528,-77.493521
+Van Heck Funeral Home Limited,172 Symes Street,Glencoe,ON,,,Independent,No,,42.749589,-81.711616
+Vescio Funeral Home (Maple) Inc.,211 McNaughton Rd. East,Maple,ON,,,Independent,No,,43.859495,-79.506897
+Vescio Funeral Homes Inc.,2080 Dufferin St.,Toronto,ON,,,Independent,No,,43.687531,-79.447221
+Victoria Greenlawn Funeral Home & Cemetery,1525 Hwy 3,Oldcastle,ON,,,Independent,No,,42.226326,-82.958005
+W. John Thomas Funeral Home Limited,244 Victoria St. East,Alliston,ON,,,Independent,No,,44.156436,-79.858441
+W.C. Town Funeral Chapel,110 Dundas St. East,Whitby,ON,,,Independent,No,,43.880222,-78.941534
+W.G. Young Funeral Home Ltd.,430 Huron Street,Stratford,ON,,,Independent,No,,43.379132,-80.998331
+Wagg Funeral Home Ltd.,216 Queen Street,Port Perry,ON,,,Independent,No,,44.104542,-78.944290
+Wall-Custance Funeral Home & Chapel,206 Norfolk St.,Guelph,ON,,,Independent,No,,43.548350,-80.255182
+Ward Funeral Home,52 Main St.,Brampton,ON,,,PE,No,Ward,43.684089,-79.757258
+Ward Funeral Home,2035 Weston Rd.,Toronto,ON,,,PE,No,Ward,43.701771,-79.520979
+Ward Funeral Home,4671 Hwy #7,Woodbridge,ON,,,PE,No,Ward,43.782795,-79.578722
+Wartman Funeral Home Inc.,980 Collins Bay Rd.,Kingston,ON,,,Independent,No,,44.251558,-76.610638
+Wartman Funeral Home Inc.,448 Camden Rd.,Napanee,ON,,,Independent,No,,44.261149,-76.951266
+Weaver Family Funeral Home (Campbellford) Ltd.,77 Second St.,Campbellford,ON,,,Independent,Yes,,44.303671,-77.796966
+Weaver Family Funeral Home (Trenton) Ltd.,170 Dundas St. West,Trenton,ON,,,Independent,Yes,,44.098937,-77.580740
+Weaver Family Funeral Home (Trenton) Ltd.,29 Bay St.,Trenton,ON,,,Independent,Yes,,44.103632,-77.569501
+Weaver Family Funeral Homes,70 Church St.,Warkworth,ON,,,Independent,Yes,,44.202203,-77.884647
+Welland Funeral Home Ltd.,827 East Main Street,Welland,ON,,,Independent,No,,42.993267,-79.230225
+Westminster Funeral & Reception Centre,5826 Bathurst St,North York,ON,,,Independent,No,,43.754169,-79.438131
+Westmount Memorial Celebration Centre,1001 Ottawa St. South,Kitchener,ON,,,Independent,No,,43.422841,-80.487126
+Westview Funeral Home & Cremation Centre,709 Wonderland Rd. North,London,ON,,,Independent,No,,42.987592,-81.294372
+Whelan Funeral Home Ltd.,515 Cooper Street,Ottawa,ON,,,Independent,No,,45.414236,-75.701923
+Whispering Pines Funeral Home Ltd.,15 King St. East,Powassan,ON,,,Independent,No,,46.081447,-79.361115
+Williams Funeral Home Limited,45 Elgin St.,St. Thomas,ON,,,Independent,No,,42.776474,-81.197884
+Williams Funeral Services,722 Ridge Rd. North,Ridgeway,ON,,,Independent,No,,42.894673,-79.050028
+Wilson Funeral Home,822 Pitt St.,Cornwall,ON,,,Independent,No,,45.027926,-74.734392
+Wilson Funeral Home,218 Montreal Rd.,Cornwall,ON,,,Independent,No,,45.018648,-74.712497
+Windsor Chapel Funeral Home,11677 Tecumseh Road East,Windsor,ON,,,Independent,No,,42.304930,-82.980928
+Windsor Chapel Funeral Home,1700 Tecumseh Road East,Windsor,ON,,,Independent,No,,42.304930,-82.980928
+Windsor Chapel Funeral Home,3048 Dougall Ave.,Windsor,ON,,,Independent,No,,42.250644,-82.999116
+Wm. Kipp Funeral Home-Ayr Chapel,183 Northumberland Street,Ayr,ON,,,Independent,No,,43.291522,-80.457869
+Wm. Kipp Funeral Home-Paris Chapel,184 Grand River Street North,Paris,ON,,,Independent,No,,43.198747,-80.385088
+"Woodland Cemetery, Mausoleum and Crematorium",493 Springbank Dr.,London,ON,,,Independent,No,,42.965330,-81.289844
+York Funeral Centre,160 Beecroft Rd,Toronto,ON,,,Independent,No,,,
+Zohr Family Funeral Home Inc.,85 Munroe Avenue East,Renfrew,ON,,,Independent,No,,45.476427,-76.685013
+Zohr Family Funeral Home Inc.,194 Jane Street,Eganville,ON,,,Independent,No,,45.542181,-77.106728
+Zohr Family Funeral Home Inc.,11 Lake St.,Killaloe,ON,,,Independent,No,,45.554784,-77.414804
+Ajax Crematorium and Visitation Centre Inc.,384 Finley Avenue,Ajax,ON,,,Independent,No,,43.839065,-79.029852
+Allison Funeral Home,103 Mill Street North,Port Hope,ON,,,Independent,No,,43.955417,-78.292735
+Aurora Funeral Services Inc.,304 Kennedy Road,Dryden,ON,,,Independent,No,,49.796788,-92.847655
+Bieman Funeral Home Limited,3970 Hamilton Road,Dorchester,ON,,,Independent,No,,42.988674,-81.061250
+Boyce Funeral Home Ltd.,138 Daniel Street North,Arnprior,ON,,,Independent,No,,45.433857,-76.352533
+Brown Family Funeral Homes Limited,1-900 10th Street West,Owen Sound,ON,,,Independent,No,,44.567622,-80.944241
+D.J. Robb Funeral Home & Cremation Centre Ltd.,102 N. Victoria Street,Sarnia,ON,,,Independent,No,,42.970747,-82.405858
+David B. Bieman Funeral Directors' Services Limited,P.O. Box 87,Dorchester,ON,,,Independent,No,,42.988686,-81.058695
+Dryden Community Funeral Home Ltd.,249 Grand Trunk Ave.,Dryden,ON,,,Independent,No,,49.794241,-92.847122
+Hinnegan-Peseski Funeral Home Ltd.,156 William Street South,Chatham,ON,,,Independent,No,,42.400692,-82.179374
+Island Funeral Home,36 Worthington St.,Little Current,ON,,,Independent,No,,45.978642,-81.928143
+Lakeview Cemetery Burial & Cremation Services,1016 Colborne Rd.,Sarnia,ON,,,Independent,No,,42.992774,-82.388339
+Salon Funéraire Glengarry Funeral Home,580 Main St. South,Alexandria,ON,,,Independent,No,,45.295691,-74.626206
+Salons Funéraires Laurent Hill Funeral Homes,709 Principale St.,Casselman,ON,,,Independent,No,,45.312289,-75.086139
+Simpson Funeral Home Limited,3 McQuarrie Blvd.,Gore Bay,ON,,,Independent,No,,45.909359,-82.457173
+Steven R. Bridge Funeral Home Inc.,207 Mill St.,Angus,ON,,,Independent,No,,44.326306,-79.889123
+T.A. Brown Funeral Home,510 Mill St.,Port Elgin,ON,,,Independent,No,,44.438562,-81.391195
+Martyn & Sloan Mattawa Chapel,530 McConnell Street,Mattawa,ON,,,Independent,No,,46.313369,-78.704135
+Needham-Jay Funeral Home Inc.,650 Broadway St.,Wyoming,ON,,,Independent,No,,42.951227,-82.118862
+Thomas C. Whitcroft Peninsula Chapel,272 Berford Street,Wiarton,ON,,,Independent,No,,44.736903,-81.140470`;
+
+const parsed = Papa.parse(CSV, { header:true, skipEmptyLines:true });
+const allHomes = parsed.data.map(r => ({
+    ...r,
+    Lat:    parseFloat(r.Lat)  || null,
+    Lng:    parseFloat(r.Lng)  || null,
+    isOFSA: r.OFSA === 'Yes',
+    isPE:   r.Type === 'PE',
+    isCorp: r.Type === 'Corporate',
+    isInd:  r.Type === 'Independent',
+}));
+
+/* ── Map ──────────────────────────────────────────────────────── */
+const map = L.map('map', { zoomControl:true }).setView([44.8, -79.0], 7);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+}).addTo(map);
+
+const cluster = L.markerClusterGroup({
+    maxClusterRadius:50,
+    spiderfyOnMaxZoom:true,
+    showCoverageOnHover:false,
+    zoomToBoundsOnClick:true,
+    iconCreateFunction(c) {
+        const n = c.getChildCount();
+        return L.divIcon({
+            html: `<div style="
+                background:rgba(20,20,20,.92);
+                color:white;
+                border:2px solid #555;
+                border-radius:50%;
+                width:38px; height:38px;
+                display:flex; align-items:center; justify-content:center;
+                font-family:'IBM Plex Mono',monospace;
+                font-size:11px; font-weight:600;
+            ">${n}</div>`,
+            className:'', iconSize:[38,38],
+        });
+    },
+});
+
+function markerColor(h) {
+    if (h.isPE)   return '#9b1010';
+    if (h.isCorp) return '#7a5800';
+    if (h.isOFSA) return '#1e5a9c';
+    return '#1a6b3a';
+}
+
+function popupTypeBarClass(h) {
+    if (h.isCorp) return 'corp-bar';
+    if (h.isOFSA) return 'ofsa-bar';
+    if (h.isInd && !h.isOFSA) return 'ind-bar';
+    return '';
+}
+
+function badgeHTML(h) {
+    let b = '';
+    if (h.isPE)              b += `<span class="popup-badge badge-pe">PE · Birch Hill</span>`;
+    if (h.isCorp)            b += `<span class="popup-badge badge-corporate">Corporate · SCI</span>`;
+    if (h.isOFSA)            b += `<span class="popup-badge badge-ofsa">OFSA Member</span>`;
+    if (h.isInd && !h.isOFSA) b += `<span class="popup-badge badge-independent">Independent</span>`;
+    if (h.Brand)             b += `<span class="popup-badge badge-brand">${h.Brand}</span>`;
+    return b;
+}
+
+function cardBadgeHTML(h) {
+    let b = '';
+    if (h.isPE)   b += `<span class="badge badge-pe">PE</span>`;
+    if (h.isCorp) b += `<span class="badge badge-corporate">SCI</span>`;
+    if (h.isOFSA) b += `<span class="badge badge-ofsa">OFSA</span>`;
+    if (h.isInd && !h.isOFSA) b += `<span class="badge badge-independent">Indep.</span>`;
+    if (h.Brand)  b += `<span class="badge badge-brand">${h.Brand}</span>`;
+    return b;
+}
+
+const markerMap = {};
+
+function buildMarkers(homes) {
+    cluster.clearLayers();
+    Object.keys(markerMap).forEach(k => delete markerMap[k]);
+    homes.forEach(home => {
+        if (!home.Lat || !home.Lng) return;
+        const col = markerColor(home);
+        const r   = home.isPE ? 9 : home.isCorp ? 8 : 6;
+        const m = L.circleMarker([home.Lat, home.Lng], {
+            radius: r,
+            fillColor: col,
+            color: home.isPE ? 'rgba(255,200,200,.6)' : 'rgba(255,255,255,.5)',
+            weight: home.isPE ? 2.5 : 1.5,
+            opacity: 1,
+            fillOpacity: home.isPE ? 0.95 : 0.82,
+        });
+        const barClass = popupTypeBarClass(home);
+        m.bindPopup(`
+            <div class="popup-type-bar ${barClass}"></div>
+            <div class="popup-inner">
+                <div class="popup-title">${home.Name}</div>
+                <div class="popup-addr">
+                    ${home.Address}<br>${home.City}, ON
+                    ${home.Phone ? '<br>☎ ' + home.Phone : ''}
+                </div>
+                <div class="popup-badges">${badgeHTML(home)}</div>
+            </div>
+        `, { maxWidth:280 });
+        markerMap[home.Name + home.Address] = m;
+        cluster.addLayer(m);
+    });
+    map.addLayer(cluster);
+}
+
+/* ── List ─────────────────────────────────────────────────────── */
+function sortHomes(homes, mode) {
+    const h = [...homes];
+    if (mode === 'name')      h.sort((a,b) => (a.Name||'').localeCompare(b.Name||''));
+    if (mode === 'name-desc') h.sort((a,b) => (b.Name||'').localeCompare(a.Name||''));
+    if (mode === 'city')      h.sort((a,b) => (a.City||'').localeCompare(b.City||'') || (a.Name||'').localeCompare(b.Name||''));
+    if (mode === 'brand')     h.sort((a,b) => (a.Brand||'ZZZ').localeCompare(b.Brand||'ZZZ') || (a.Name||'').localeCompare(b.Name||''));
+    if (mode === 'pe-first')  h.sort((a,b) => {
+        const s = x => x.isPE ? 0 : x.isCorp ? 1 : x.isOFSA ? 2 : 3;
+        return s(a) - s(b) || (a.Name||'').localeCompare(b.Name||'');
+    });
+    return h;
+}
+
+function buildList(homes) {
+    const body = document.getElementById('list-body');
+    const countEl = document.getElementById('list-count');
+    const sorted = sortHomes(homes, currentSort);
+    countEl.textContent = sorted.length + ' shown';
+    body.innerHTML = '';
+    if (!sorted.length) {
+        body.innerHTML = '<div class="no-results">No establishments match<br>your current filters.</div>';
+        return;
+    }
+    const frag = document.createDocumentFragment();
+    sorted.forEach(home => {
+        let cls = 'home-card';
+        if (home.isPE)              cls += ' pe-card';
+        else if (home.isCorp)       cls += ' corp-card';
+        else if (home.isOFSA)       cls += ' ofsa-card';
+        else                        cls += ' ind-card';
+        const card = document.createElement('div');
+        card.className = cls;
+        card.innerHTML = `
+            <div class="home-name">${home.Name}</div>
+            <div class="home-city">${home.City}, ON</div>
+            <div class="badges">${cardBadgeHTML(home)}</div>
+        `;
+        card.addEventListener('click', () => {
+            if (home.Lat && home.Lng) {
+                map.setView([home.Lat, home.Lng], 15);
+                const m = markerMap[home.Name + home.Address];
+                if (m) cluster.zoomToShowLayer(m, () => m.openPopup());
+            }
+        });
+        frag.appendChild(card);
+    });
+    body.appendChild(frag);
+}
+
+/* ── Live Stats ───────────────────────────────────────────────── */
+function updateStats(homes) {
+    const pe   = homes.filter(h => h.isPE).length;
+    const corp = homes.filter(h => h.isCorp).length;
+    const ofsa = homes.filter(h => h.isOFSA).length;
+    const ind  = homes.filter(h => h.isInd && !h.isOFSA).length;
+    const tot  = homes.length;
+    document.getElementById('stat-total').textContent = tot;
+    document.getElementById('stat-pe').textContent    = pe;
+    document.getElementById('stat-corp').textContent  = corp;
+    document.getElementById('stat-ofsa').textContent  = ofsa;
+    document.getElementById('stat-ind').textContent   = ind;
+    document.getElementById('stat-share').textContent = tot ? (pe/tot*100).toFixed(1)+'%' : '—';
+}
+
+/* ── Region Sets ──────────────────────────────────────────────── */
+const REGIONS = {
+    toronto:  new Set(['Toronto','Mississauga','Brampton','Markham','Oakville','Woodbridge','Richmond Hill','Ajax','Vaughan','Scarborough','Etobicoke','North York','East York','Innisfil','Keswick','Sutton','Sutton West','Stouffville','Pickering','Whitby','Oshawa','Bowmanville','Newmarket','Aurora','Thornhill']),
+    ottawa:   new Set(['Ottawa','Carp','Burks Falls','Sundridge','Pembroke','Renfrew','Carleton Place','Perth','Arnprior','Kanata','Nepean','Orleans','Gloucester','Alfred','Kars']),
+    hamilton: new Set(['Hamilton','Burlington','Ancaster','Stoney Creek','Grimsby','Dundas','Caledonia','Brantford','Paris','Simcoe','Fort Erie','Niagara Falls','St. Catharines','Welland']),
+    muskoka:  new Set(['Huntsville','Gravenhurst','Bracebridge','Orillia','Parry Sound','Collingwood','Midland','Penetanguishene','Barrie']),
+    london:   new Set(['London','Woodstock','Stratford','Guelph','Kitchener','Waterloo','Cambridge','Sarnia','Windsor','Chatham','Blenheim','Tillsonburg','Ingersoll']),
+    north:    new Set(['Sudbury','Sault Ste. Marie','Thunder Bay','Timmins','Kenora','Kapuskasing','Cochrane','Iroquois Falls','New Liskeard','Espanola','Powassan','North Bay','Elliot Lake']),
+};
+
+/* ── Filter State ─────────────────────────────────────────────── */
+let currentFilter = 'all';
+let currentBrand  = 'all';
+let currentSearch = '';
+let currentSort   = 'name';
+let filteredHomes = allHomes;
+
+function applyFilters() {
+    const q = currentSearch.toLowerCase().trim();
+    filteredHomes = allHomes.filter(h => {
+        // Type / region match
+        let typeMatch = true;
+        if      (currentFilter === 'pe')          typeMatch = h.isPE;
+        else if (currentFilter === 'corporate')   typeMatch = h.isCorp;
+        else if (currentFilter === 'ofsa')        typeMatch = h.isOFSA;
+        else if (currentFilter === 'independent') typeMatch = h.isInd && !h.isOFSA;
+        else if (REGIONS[currentFilter])          typeMatch = REGIONS[currentFilter].has(h.City);
+
+        // Brand sub-filter (only active when pe filter on)
+        let brandMatch = true;
+        if (currentFilter === 'pe' && currentBrand !== 'all') {
+            brandMatch = (h.Brand || '') === currentBrand;
+        }
+
+        // Text search
+        const textMatch = !q ||
+            (h.Name    ||'').toLowerCase().includes(q) ||
+            (h.City    ||'').toLowerCase().includes(q) ||
+            (h.Address ||'').toLowerCase().includes(q) ||
+            (h.Postal  ||'').toLowerCase().includes(q) ||
+            (h.Brand   ||'').toLowerCase().includes(q);
+
+        return typeMatch && brandMatch && textMatch;
+    });
+
+    buildMarkers(filteredHomes);
+    buildList(filteredHomes);
+    updateStats(filteredHomes);
+
+    // Auto-fit map bounds (skip for "all" to keep Ontario-wide view)
+    if (filteredHomes.length > 0 && currentFilter !== 'all') {
+        const pts = filteredHomes.filter(h => h.Lat && h.Lng);
+        if (pts.length) {
+            map.fitBounds(
+                L.latLngBounds(pts.map(h => [h.Lat, h.Lng])),
+                { padding:[60,60], maxZoom:13 }
+            );
+        }
+    } else if (currentFilter === 'all' && !q) {
+        map.setView([44.8, -79.0], 7);
+    }
+}
+
+/* ── Event Listeners ──────────────────────────────────────────── */
+// Search
+document.getElementById('search').addEventListener('input', e => {
+    currentSearch = e.target.value;
+    document.getElementById('search-clear').style.display = currentSearch ? 'block' : 'none';
+    applyFilters();
+});
+document.getElementById('search-clear').addEventListener('click', () => {
+    document.getElementById('search').value = '';
+    currentSearch = '';
+    document.getElementById('search-clear').style.display = 'none';
+    applyFilters();
+});
+
+// Sort
+document.getElementById('sort-select').addEventListener('change', e => {
+    currentSort = e.target.value;
+    buildList(filteredHomes);
+});
+
+// Type / region filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        currentBrand  = 'all';
+        // Show/hide brand sub-filters
+        const bf = document.getElementById('brand-filters');
+        if (currentFilter === 'pe') {
+            bf.classList.add('visible');
+        } else {
+            bf.classList.remove('visible');
+            document.querySelectorAll('.brand-filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.brand-filter-btn[data-brand="all"]').classList.add('active');
+        }
+        applyFilters();
+    });
+});
+
+// Brand sub-filter buttons
+document.querySelectorAll('.brand-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.brand-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentBrand = btn.dataset.brand;
+        applyFilters();
+    });
+});
+
+// Export CSV
+document.getElementById('export-btn').addEventListener('click', () => {
+    const headers = ['Name','Address','City','Province','Type','OFSA','Brand','Lat','Lng'];
+    const rows = filteredHomes.map(h =>
+        headers.map(k => `"${(h[k]||'').replace(/"/g,'""')}"`).join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'ontario_funeral_homes_filtered.csv';
+    a.click();
+});
+
+// Back to top
+window.addEventListener('scroll', () => {
+    const btn = document.getElementById('back-top');
+    btn.classList.toggle('visible', window.scrollY > 600);
+});
+
+/* ── Init ─────────────────────────────────────────────────────── */
+buildMarkers(allHomes);
+buildList(allHomes);
+</script>
+</body>
+</html>
