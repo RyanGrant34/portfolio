@@ -165,10 +165,10 @@ export function RewriteChat({
                 "resize-none",
                 "bg-transparent",
                 "border-none",
-                "text-[var(--paper)] text-sm font-mono",
+                "text-[var(--paper)] text-sm",
                 "focus:outline-none",
                 "focus-visible:ring-0 focus-visible:ring-offset-0",
-                "placeholder:text-[var(--muted)] placeholder:text-sm placeholder:font-mono",
+                "placeholder:text-[var(--muted)] placeholder:text-sm",
                 "min-h-[100px]"
               )}
               style={{ overflow: "hidden" }}
@@ -214,7 +214,7 @@ export function RewriteChat({
         </div>
 
         {error && (
-          <p className="text-[var(--error)] text-sm font-mono mt-2">
+          <p className="text-[var(--error)] text-sm mt-2">
             {error}
           </p>
         )}

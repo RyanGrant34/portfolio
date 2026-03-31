@@ -42,7 +42,7 @@ export const TestimonialsColumn = (props: {
                   <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[var(--accent)]/40" />
                   <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[var(--accent)]/40" />
 
-                  <div className="text-sm text-[var(--paper-dark)] leading-relaxed font-[var(--font-body)]">
+                  <div className="text-sm text-[var(--paper-dark)] leading-relaxed">
                     {text}
                   </div>
                   <div className="flex items-center gap-3 mt-5 pt-4 border-t border-[var(--ghost)]/30">
@@ -54,7 +54,7 @@ export const TestimonialsColumn = (props: {
                       className="h-9 w-9 rounded-none object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
                     />
                     <div className="flex flex-col">
-                      <div className="font-mono font-semibold text-[var(--paper)] text-xs tracking-wide">
+                      <div className="font-semibold text-[var(--paper)] text-xs tracking-wide">
                         {name}
                       </div>
                       <div className="font-mono text-[var(--muted)] text-[0.65rem] tracking-wider uppercase">
@@ -156,7 +156,7 @@ export const Testimonials = () => {
           >
             People stopped getting flagged
           </h2>
-          <p className="text-center mt-4 text-[var(--muted)] text-sm font-mono">
+          <p className="text-center mt-4 text-[var(--muted)] text-sm">
             Real users. Real results. No more robot voice.
           </p>
         </motion.div>

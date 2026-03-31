@@ -14,7 +14,7 @@ export function FeyButton({ className, children, icon, ...props }: FeyButtonProp
       className={cn(
         "group relative flex items-center justify-center gap-1.5",
         "h-10 min-w-[160px] whitespace-nowrap px-6 py-2",
-        "text-sm font-mono font-semibold tracking-wide uppercase",
+        "text-sm font-semibold tracking-wide uppercase",
         "text-[var(--ink)] bg-[var(--accent)]",
         "border border-[var(--accent)]",
         "transition-all duration-200",

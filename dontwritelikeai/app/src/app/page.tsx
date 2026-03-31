@@ -79,7 +79,7 @@ export default function Home() {
               AI
             </span>
           </h1>
-          <p className="text-[var(--muted)] text-base max-w-[480px] font-mono text-sm mb-10">
+          <p className="text-[var(--muted)] max-w-[480px] text-sm mb-10">
             Paste the robot text. Get back something that sounds like a person
             actually wrote it.
           </p>
@@ -116,7 +116,7 @@ export default function Home() {
               </button>
             </div>
             <ScrollArea className="max-h-[400px] border border-[var(--accent)]/20 bg-[var(--ink-light)] glow-accent">
-              <div className="p-5 text-[var(--paper)] text-sm leading-7 whitespace-pre-wrap font-mono">
+              <div className="p-5 text-[var(--paper)] text-sm leading-7 whitespace-pre-wrap">
                 {rewrittenText}
               </div>
             </ScrollArea>
@@ -137,7 +137,7 @@ export default function Home() {
               <p className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--error)] mb-3 ml-3">
                 Input &mdash; AI detected
               </p>
-              <p className="text-sm text-[var(--muted)] leading-relaxed ml-3 font-mono">
+              <p className="text-sm text-[var(--muted)] leading-relaxed ml-3">
                 &ldquo;The city boasts a vibrant cultural tapestry, showcasing a
                 rich heritage that serves as a testament to its enduring legacy.
                 Additionally, the diverse culinary landscape offers a seamless
@@ -150,7 +150,7 @@ export default function Home() {
               <p className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--accent)] mb-3 ml-3">
                 Output &mdash; human
               </p>
-              <p className="text-sm text-[var(--paper)] leading-relaxed ml-3 font-mono">
+              <p className="text-sm text-[var(--paper)] leading-relaxed ml-3">
                 &ldquo;The city has a long cultural history that still shapes
                 daily life. The food scene mixes old recipes with newer ones, and
                 that&apos;s part of what pulls people together there.&rdquo;
@@ -164,7 +164,7 @@ export default function Home() {
               <p className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--error)] mb-3 ml-3">
                 Input &mdash; AI detected
               </p>
-              <p className="text-sm text-[var(--muted)] leading-relaxed ml-3 font-mono">
+              <p className="text-sm text-[var(--muted)] leading-relaxed ml-3">
                 &ldquo;This groundbreaking initiative underscores the
                 organization&apos;s commitment to leveraging innovative solutions
                 to navigate the evolving landscape of digital transformation,
@@ -176,7 +176,7 @@ export default function Home() {
               <p className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--accent)] mb-3 ml-3">
                 Output &mdash; human
               </p>
-              <p className="text-sm text-[var(--paper)] leading-relaxed ml-3 font-mono">
+              <p className="text-sm text-[var(--paper)] leading-relaxed ml-3">
                 &ldquo;The company is trying something new with digital tools.
                 It&apos;s a real change in direction for them.&rdquo;
               </p>

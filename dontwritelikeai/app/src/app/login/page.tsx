@@ -35,7 +35,7 @@ export default function LoginPage() {
       )}
 
       {/* Toggle */}
-      <p className="mt-6 text-sm font-mono text-[var(--muted)]">
+      <p className="mt-6 text-sm text-[var(--muted)]">
         {mode === "signin" ? "No account? " : "Already have an account? "}
         <button
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}

@@ -98,24 +98,24 @@ export default function SettingsPage() {
           </h2>
           <div className="border border-[var(--ghost)]/40 bg-[var(--ink-light)] p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-mono text-[var(--muted)]">Email</span>
-              <span className="text-sm font-mono text-[var(--paper)]">
+              <span className="text-sm text-[var(--muted)]">Email</span>
+              <span className="text-sm text-[var(--paper)]">
                 {email || user?.primaryEmailAddress?.emailAddress || "..."}
               </span>
             </div>
             <div className="h-px bg-[var(--ghost)]/20" />
             <div className="flex justify-between items-center">
-              <span className="text-sm font-mono text-[var(--muted)]">Plan</span>
-              <span className="text-sm font-mono text-[var(--accent)] uppercase">
+              <span className="text-sm text-[var(--muted)]">Plan</span>
+              <span className="text-sm font-mono text-[var(--accent)] uppercase tracking-wider">
                 {plan}
               </span>
             </div>
             <div className="h-px bg-[var(--ghost)]/20" />
             <div className="flex justify-between items-center">
-              <span className="text-sm font-mono text-[var(--muted)]">
+              <span className="text-sm text-[var(--muted)]">
                 Rewrites today
               </span>
-              <span className="text-sm font-mono text-[var(--paper)]">
+              <span className="text-sm text-[var(--paper)]">
                 {rewritesToday}
               </span>
             </div>
@@ -124,13 +124,13 @@ export default function SettingsPage() {
 
         {/* Billing */}
         <section className="mb-10">
-          <h2 className="font-mono text-[0.65rem] text-[var(--accent)] uppercase tracking-[0.2em] mb-4">
+          <h2 className="font-mono text-[0.65rem] text-[var(--accent)]/70 uppercase tracking-[0.2em] mb-4">
             // billing
           </h2>
           <div className="border border-[var(--ghost)]/40 bg-[var(--ink-light)] p-6">
             {plan === "pro" ? (
               <div className="space-y-4">
-                <p className="text-sm font-mono text-[var(--paper)]">
+                <p className="text-sm text-[var(--paper)]">
                   You&apos;re on the Pro plan. Manage your subscription below.
                 </p>
                 <FeyButton onClick={handleManageBilling} className="bg-transparent text-[var(--paper)] border-[var(--ghost)] hover:border-[var(--accent)] hover:text-[var(--accent)]">
@@ -139,7 +139,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm font-mono text-[var(--muted)]">
+                <p className="text-sm text-[var(--muted)]">
                   Upgrade to Pro for unlimited rewrites, better AI model, tone
                   presets, and 15K character limit.
                 </p>

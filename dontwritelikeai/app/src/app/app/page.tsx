@@ -215,9 +215,9 @@ export default function AppPage() {
             placeholder="Paste your AI-generated text here..."
             className={cn(
               "w-full px-4 py-4 min-h-[160px] resize-none",
-              "bg-transparent border-none text-[var(--paper)] text-sm font-mono",
+              "bg-transparent border-none text-[var(--paper)] text-sm",
               "focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
-              "placeholder:text-[var(--muted)] placeholder:font-mono"
+              "placeholder:text-[var(--muted)]"
             )}
           />
           <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--ghost)]/30">
@@ -251,7 +251,7 @@ export default function AppPage() {
         </div>
 
         {error && (
-          <p className="text-[var(--error)] text-sm font-mono mt-2">
+          <p className="text-[var(--error)] text-sm mt-2">
             {error}
           </p>
         )}
@@ -292,7 +292,7 @@ export default function AppPage() {
               </button>
             </div>
             <ScrollArea className="max-h-[500px] border border-[var(--accent)]/20 bg-[var(--ink-light)] glow-accent">
-              <div className="p-5 text-[var(--paper)] text-sm leading-7 whitespace-pre-wrap font-mono">
+              <div className="p-5 text-[var(--paper)] text-sm leading-7 whitespace-pre-wrap">
                 {output}
               </div>
             </ScrollArea>
@@ -302,10 +302,10 @@ export default function AppPage() {
         {/* Upgrade banner */}
         {showUpgrade && plan === "free" && (
           <div className="mt-8 p-6 border border-[var(--accent)]/30 bg-[var(--accent)]/5 text-center glow-accent">
-            <p className="text-[var(--paper)] font-mono font-semibold mb-1">
+            <p className="text-[var(--paper)] font-semibold mb-1">
               You&apos;ve hit today&apos;s limit
             </p>
-            <p className="text-[var(--muted)] text-sm font-mono mb-4">
+            <p className="text-[var(--muted)] text-sm mb-4">
               Upgrade to Pro for unlimited rewrites, better model, and more.
             </p>
             <FeyButton

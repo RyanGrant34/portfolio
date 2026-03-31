@@ -77,7 +77,7 @@ const Footer2 = ({
                   DWLAI
                 </p>
               </div>
-              <p className="mt-4 text-[var(--muted)] text-sm font-mono">
+              <p className="mt-4 text-[var(--muted)] text-sm">
                 {tagline}
               </p>
               <p className="mt-2 text-xs text-[var(--ghost)] font-mono">
@@ -93,7 +93,7 @@ const Footer2 = ({
                   {section.links.map((link, linkIdx) => (
                     <li
                       key={linkIdx}
-                      className="text-sm font-mono hover:text-[var(--accent)] transition-colors"
+                      className="text-sm hover:text-[var(--accent)] transition-colors"
                     >
                       <a href={link.url}>{link.text}</a>
                     </li>

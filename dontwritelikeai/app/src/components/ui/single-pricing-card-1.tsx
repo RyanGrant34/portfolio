@@ -31,7 +31,7 @@ export function Pricing() {
           >
             Free rewrites. Or go unlimited.
           </h2>
-          <p className="text-[var(--muted)] mt-5 text-center text-sm font-mono">
+          <p className="text-[var(--muted)] mt-5 text-center text-sm">
             Three free rewrites a day covers most people. But if you write for a
             living, the math changes fast.
           </p>
@@ -134,7 +134,7 @@ export function Pricing() {
                     </FeyButton>
                   </a>
                 </div>
-                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)] font-mono">
+                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--ghost)]">-</span> 3 rewrites
                     per day
@@ -200,7 +200,7 @@ export function Pricing() {
                     </FeyButton>
                   </a>
                 </div>
-                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)] font-mono">
+                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--accent)]">+</span>{" "}
                     <span className="text-[var(--paper)]">
