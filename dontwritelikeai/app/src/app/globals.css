@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
+@import "tailwindcss";
 
 :root {
   --ink: #1a1612;
@@ -15,6 +15,21 @@
   --background: var(--ink);
   --foreground: var(--paper);
 
+  /* shadcn tokens */
+  --border: rgba(200, 194, 182, 0.15);
+  --input: rgba(200, 194, 182, 0.15);
+  --ring: #c23616;
+  --primary: #c23616;
+  --primary-foreground: #f4f0e8;
+  --secondary: #2a2520;
+  --secondary-foreground: #f4f0e8;
+  --destructive: #e74c3c;
+  --destructive-foreground: #f4f0e8;
+  --accent-color: #2a2520;
+  --accent-foreground: #f4f0e8;
+  --muted-foreground: #8a8278;
+  --ring-offset: var(--ink);
+
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: 'Source Serif 4', Georgia, serif;
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
@@ -23,6 +38,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent: var(--accent-color);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-ring-offset: var(--ring-offset);
   --font-sans: var(--font-body);
   --font-mono: var(--font-mono);
 }

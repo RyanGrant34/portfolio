@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { RewriteChat } from "@/components/ui/v0-ai-chat";
 import { Testimonials } from "@/components/ui/testimonials-columns-1";
+import { Pricing } from "@/components/ui/single-pricing-card-1";
 import { Copy, Check } from "lucide-react";
 
 export default function Home() {
@@ -171,6 +172,9 @@ export default function Home() {
 
         {/* Testimonials */}
         <Testimonials />
+
+        {/* Pricing */}
+        <Pricing />
 
         {/* Ad Slot: Bottom Banner */}
         <div className="border border-dashed border-[var(--ghost)]/10 rounded p-6 text-center my-10">
