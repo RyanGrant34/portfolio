@@ -1,13 +1,15 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { PlusIcon, ShieldCheckIcon, Zap, Infinity } from "lucide-react";
 import { motion } from "motion/react";
 import { Badge } from "./badge";
-import { Button } from "./button";
 import { cn } from "@/lib/utils";
 import { BorderTrail } from "./border-trail";
+import { FeyButton } from "./fey-button";
 
 export function Pricing() {
+  const [yearly, setYearly] = useState(false);
+
   return (
     <section className="relative overflow-hidden py-20">
       <div id="pricing" className="mx-auto w-full max-w-4xl space-y-5 px-4">
@@ -33,6 +35,45 @@ export function Pricing() {
             Three free rewrites a day covers most people. But if you write for a
             living, the math changes fast.
           </p>
+
+          {/* Billing toggle */}
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <span
+              className={cn(
+                "text-sm font-mono transition-colors",
+                !yearly ? "text-[var(--paper)]" : "text-[var(--muted)]"
+              )}
+            >
+              Monthly
+            </span>
+            <button
+              onClick={() => setYearly(!yearly)}
+              className={cn(
+                "relative w-11 h-6 rounded-full transition-colors",
+                yearly ? "bg-[var(--accent)]" : "bg-[var(--ghost)]/20"
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-[var(--paper)] transition-transform",
+                  yearly && "translate-x-5"
+                )}
+              />
+            </button>
+            <span
+              className={cn(
+                "text-sm font-mono transition-colors",
+                yearly ? "text-[var(--paper)]" : "text-[var(--muted)]"
+              )}
+            >
+              Yearly
+            </span>
+            {yearly && (
+              <Badge className="bg-[var(--success)] text-white border-transparent text-[0.6rem]">
+                Save 33%
+              </Badge>
+            )}
+          </div>
         </motion.div>
 
         <div className="relative">
@@ -83,19 +124,20 @@ export function Pricing() {
                     </span>
                     <span>/forever</span>
                   </div>
-                  <Button className="w-full" variant="outline" asChild>
-                    <a href="#">Start Rewriting</a>
-                  </Button>
+                  <FeyButton className="w-full">Start Rewriting</FeyButton>
                 </div>
                 <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
                   <li className="flex items-center gap-2">
-                    <span className="text-[var(--ghost)]">-</span> 3 rewrites per day
+                    <span className="text-[var(--ghost)]">-</span> 3 rewrites
+                    per day
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-[var(--ghost)]">-</span> 5,000 character limit
+                    <span className="text-[var(--ghost)]">-</span> 5,000
+                    character limit
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-[var(--ghost)]">-</span> Standard model
+                    <span className="text-[var(--ghost)]">-</span> Standard
+                    model (Haiku)
                   </li>
                 </ul>
               </div>
@@ -129,34 +171,55 @@ export function Pricing() {
                 <div className="mt-10 space-y-4">
                   <div className="text-[var(--muted)] flex items-end text-xl">
                     <span>$</span>
-                    <span className="text-[var(--paper)] -mb-0.5 text-4xl font-extrabold tracking-tighter md:text-5xl">
-                      9
-                    </span>
+                    <motion.span
+                      key={yearly ? "yearly" : "monthly"}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-[var(--paper)] -mb-0.5 text-4xl font-extrabold tracking-tighter md:text-5xl"
+                    >
+                      {yearly ? "8" : "12"}
+                    </motion.span>
                     <span>/month</span>
                   </div>
-                  <Button
-                    className="w-full bg-[var(--accent)] text-white hover:bg-[var(--accent-dim)] border-none"
-                    asChild
+                  {yearly && (
+                    <p className="text-xs text-[var(--muted)] font-mono">
+                      $96/year &middot; billed annually
+                    </p>
+                  )}
+                  <FeyButton
+                    className="w-full bg-[var(--accent)] after:bg-[var(--accent-dim)] [box-shadow:none] after:[box-shadow:inset_0_0_0_0.5px_rgba(200,194,182,0.2),0_0_12px_rgba(194,54,22,0.3)]"
                   >
-                    <a href="#">Go Unlimited</a>
-                  </Button>
+                    Go Unlimited
+                  </FeyButton>
                 </div>
                 <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--accent)]">+</span>{" "}
-                    <span className="text-[var(--paper)]">Unlimited rewrites</span>
+                    <span className="text-[var(--paper)]">
+                      Unlimited rewrites
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--accent)]">+</span>{" "}
-                    <span className="text-[var(--paper)]">15,000 character limit</span>
+                    <span className="text-[var(--paper)]">
+                      15,000 character limit
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--accent)]">+</span>{" "}
-                    <span className="text-[var(--paper)]">Advanced model (Sonnet)</span>
+                    <span className="text-[var(--paper)]">
+                      Advanced model (Sonnet)
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--accent)]">+</span>{" "}
-                    <span className="text-[var(--paper)]">Tone presets</span>
+                    <span className="text-[var(--paper)]">
+                      Tone presets &amp; batch mode
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[var(--accent)]">+</span>{" "}
+                    <span className="text-[var(--paper)]">API access</span>
                   </li>
                 </ul>
               </div>

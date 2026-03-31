@@ -4,6 +4,9 @@ import { useState, useRef } from "react";
 import { RewriteChat } from "@/components/ui/v0-ai-chat";
 import { Testimonials } from "@/components/ui/testimonials-columns-1";
 import { Pricing } from "@/components/ui/single-pricing-card-1";
+import { GradientDots } from "@/components/ui/gradient-dots";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Footer2 } from "@/components/ui/footer2";
 import { Copy, Check } from "lucide-react";
 
 export default function Home() {
@@ -32,30 +35,39 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="max-w-4xl mx-auto w-full px-6 pt-12 pb-2">
-        <p className="font-mono text-[0.7rem] tracking-[0.2em] uppercase text-[var(--muted)] mb-2">
-          Free tool &mdash; 3 rewrites / day
-        </p>
-        <h1
-          className="text-[clamp(2.8rem,6vw,4.5rem)] font-bold leading-[0.95] tracking-tight mb-2"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          Don&apos;t Write
-          <br />
-          Like{" "}
-          <span className="line-through decoration-[var(--accent)] decoration-3 opacity-50">
-            AI
-          </span>
-        </h1>
-        <p
-          className="text-[var(--muted)] text-lg max-w-[520px] italic mb-6"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          Paste the robot text. Get back something that sounds like a person
-          actually wrote it.
-        </p>
-        <div className="w-full h-px bg-gradient-to-r from-[var(--accent)] to-transparent" />
+      {/* Hero with gradient dots background */}
+      <header className="relative overflow-hidden">
+        <GradientDots
+          duration={40}
+          colorCycleDuration={10}
+          dotSize={6}
+          spacing={12}
+          className="opacity-40"
+        />
+        <div className="relative z-10 max-w-4xl mx-auto w-full px-6 pt-16 pb-8">
+          <p className="font-mono text-[0.7rem] tracking-[0.2em] uppercase text-[var(--muted)] mb-3">
+            Free tool &mdash; 3 rewrites / day
+          </p>
+          <h1
+            className="text-[clamp(2.8rem,6vw,4.5rem)] font-bold leading-[0.95] tracking-tight mb-3"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Don&apos;t Write
+            <br />
+            Like{" "}
+            <span className="line-through decoration-[var(--accent)] decoration-3 opacity-50">
+              AI
+            </span>
+          </h1>
+          <p
+            className="text-[var(--muted)] text-lg max-w-[520px] italic mb-8"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Paste the robot text. Get back something that sounds like a person
+            actually wrote it.
+          </p>
+          <div className="w-full h-px bg-gradient-to-r from-[var(--accent)] to-transparent" />
+        </div>
       </header>
 
       {/* Main */}
@@ -86,9 +98,11 @@ export default function Home() {
                 {copied ? "Copied" : "Copy"}
               </button>
             </div>
-            <div className="p-5 rounded-xl border border-[var(--ghost)]/15 bg-[var(--ink-light)] text-[var(--paper)] text-sm leading-7 whitespace-pre-wrap">
-              {rewrittenText}
-            </div>
+            <ScrollArea className="max-h-[400px] rounded-xl border border-[var(--ghost)]/15 bg-[var(--ink-light)]">
+              <div className="p-5 text-[var(--paper)] text-sm leading-7 whitespace-pre-wrap">
+                {rewrittenText}
+              </div>
+            </ScrollArea>
           </div>
         )}
 
@@ -188,14 +202,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="max-w-4xl mx-auto w-full px-6 py-6 border-t border-[var(--ghost)]/10 flex justify-between items-center flex-wrap gap-4">
-        <span className="font-mono text-[0.65rem] text-[var(--muted)] tracking-wider">
-          dontwritelikeai.com
-        </span>
-        <span className="font-mono text-[0.65rem] text-[var(--ghost)]/30">
-          Powered by Claude API
-        </span>
-      </footer>
+      <Footer2 />
     </div>
   );
 }
