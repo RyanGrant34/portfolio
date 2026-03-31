@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Don't Write Like AI — Kill the Robot Voice</title>
+  <meta name="description" content="Paste your AI-generated text and get back something that actually sounds human. Free rewrites daily.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --ink: #1a1612;
+      --paper: #f4f0e8;
+      --paper-dark: #e8e2d6;
+      --accent: #c23616;
+      --accent-dim: #a02d12;
+      --muted: #8a8278;
+      --ghost: #c8c2b6;
+      --success: #2d6a4f;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--ink);
+      color: var(--paper);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ---- HEADER ---- */
+    header {
+      padding: 2rem 2rem 0;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--paper);
+      margin-bottom: 0.4rem;
+    }
+
+    h1 .strike {
+      text-decoration: line-through;
+      text-decoration-color: var(--accent);
+      text-decoration-thickness: 3px;
+      opacity: 0.5;
+    }
+
+    .subtitle {
+      font-family: var(--font-body);
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 520px;
+      margin-bottom: 2rem;
+      font-style: italic;
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, var(--accent), transparent);
+      margin: 0.5rem 0 2rem;
+    }
+
+    /* ---- MAIN ---- */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 700px) {
+      .editor-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      position: relative;
+    }
+
+    .panel-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .char-count {
+      color: var(--ghost);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .char-count.over { color: var(--accent); }
+
+    textarea, .output-box {
+      width: 100%;
+      min-height: 280px;
+      padding: 1.25rem;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      border: 1px solid rgba(244, 240, 232, 0.1);
+      border-radius: 2px;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    textarea {
+      background: rgba(244, 240, 232, 0.04);
+      color: var(--paper);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .output-box {
+      background: rgba(244, 240, 232, 0.02);
+      color: var(--paper);
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .output-box.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    .output-box.loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Typewriter loading */
+    .loading-text {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .loading-text::after {
+      content: '|';
+      animation: blink 0.6s infinite;
+      color: var(--accent);
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ---- CONTROLS ---- */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-rewrite {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.85rem 2rem;
+      background: var(--accent);
+      color: var(--paper);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-rewrite:hover { background: var(--accent-dim); }
+    .btn-rewrite:active { transform: scale(0.98); }
+
+    .btn-rewrite:disabled {
+      background: var(--muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-copy {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.85rem 1.5rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(244, 240, 232, 0.15);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-copy:hover {
+      color: var(--paper);
+      border-color: var(--paper);
+    }
+
+    .uses-left {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .uses-left strong {
+      color: var(--accent);
+      font-size: 0.85rem;
+    }
+
+    /* ---- ERROR ---- */
+    .error-msg {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* ---- AD SLOTS ---- */
+    .ad-slot {
+      border: 1px dashed rgba(244, 240, 232, 0.08);
+      padding: 1.5rem;
+      text-align: center;
+      margin: 2.5rem 0;
+      border-radius: 2px;
+    }
+
+    .ad-slot-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(244, 240, 232, 0.15);
+    }
+
+    .ad-slot-size {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      color: rgba(244, 240, 232, 0.1);
+      margin-top: 0.25rem;
+    }
+
+    /* ---- HOW IT WORKS ---- */
+    .how-section {
+      margin-top: 1rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(244, 240, 232, 0.06);
+    }
+
+    .how-section h2 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.6rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      .how-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+
+    .how-item {
+      padding-right: 1rem;
+    }
+
+    .how-number {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .how-item h3 {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      color: var(--paper);
+    }
+
+    .how-item p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ---- EXAMPLES ---- */
+    .examples-section {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(244, 240, 232, 0.06);
+    }
+
+    .examples-section h2 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.6rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .example-card {
+      background: rgba(244, 240, 232, 0.03);
+      border: 1px solid rgba(244, 240, 232, 0.06);
+      border-radius: 2px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .example-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .example-label.before { color: var(--accent); }
+    .example-label.after { color: var(--success); }
+
+    .example-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--ghost);
+    }
+
+    .example-card.after-card .example-text {
+      color: var(--paper);
+    }
+
+    /* ---- FOOTER ---- */
+    footer {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+      border-top: 1px solid rgba(244, 240, 232, 0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-left {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .footer-right {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: rgba(244, 240, 232, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="tagline">Free tool &mdash; 3 rewrites / day</p>
+    <h1>Don't Write<br>Like <span class="strike">AI</span></h1>
+    <p class="subtitle">Paste the robot text. Get back something that sounds like a person actually wrote it.</p>
+    <div class="divider"></div>
+  </header>
+
+  <main>
+    <div class="editor-grid">
+      <div class="panel">
+        <div class="panel-label">
+          <span>Input &mdash; paste AI text</span>
+          <span class="char-count" id="charCount">0 / 5,000</span>
+        </div>
+        <textarea
+          id="inputText"
+          placeholder="Paste your AI-generated text here. The kind with &quot;delve into,&quot; &quot;tapestry of,&quot; and &quot;it's important to note that...&quot;"
+          maxlength="5000"
+        ></textarea>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">
+          <span>Output &mdash; human version</span>
+        </div>
+        <div class="output-box empty" id="outputBox">Your rewritten text appears here</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-rewrite" id="rewriteBtn">Rewrite It</button>
+      <button class="btn-copy" id="copyBtn" style="display:none">Copy</button>
+      <span class="uses-left" id="usesLeft"></span>
+    </div>
+
+    <p class="error-msg" id="errorMsg"></p>
+
+    <!-- Ad Slot: Leaderboard -->
+    <div class="ad-slot">
+      <p class="ad-slot-label">Advertisement</p>
+      <p class="ad-slot-size">728 &times; 90 &mdash; Leaderboard</p>
+    </div>
+
+    <section class="how-section">
+      <h2>How It Works</h2>
+      <div class="how-grid">
+        <div class="how-item">
+          <div class="how-number">1</div>
+          <h3>Paste</h3>
+          <p>Drop in whatever ChatGPT, Gemini, or Claude spat out. Essays, emails, blog posts, cover letters.</p>
+        </div>
+        <div class="how-item">
+          <div class="how-number">2</div>
+          <h3>Rewrite</h3>
+          <p>We run it through a writing editor trained on 50+ documented AI writing patterns. It knows every tell.</p>
+        </div>
+        <div class="how-item">
+          <div class="how-number">3</div>
+          <h3>Copy</h3>
+          <p>Get back text that keeps your meaning but drops the robot voice. Same facts, human delivery.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ad Slot: Medium Rectangle -->
+    <div class="ad-slot">
+      <p class="ad-slot-label">Advertisement</p>
+      <p class="ad-slot-size">300 &times; 250 &mdash; Medium Rectangle</p>
+    </div>
+
+    <section class="examples-section">
+      <h2>Before &amp; After</h2>
+
+      <div class="example-card">
+        <p class="example-label before">Before</p>
+        <p class="example-text">"The city boasts a vibrant cultural tapestry, showcasing a rich heritage that serves as a testament to its enduring legacy. Additionally, the diverse culinary landscape offers a seamless blend of traditional and contemporary flavors, fostering a sense of community among residents and visitors alike."</p>
+      </div>
+      <div class="example-card after-card">
+        <p class="example-label after">After</p>
+        <p class="example-text">"The city has a long cultural history that still shapes daily life. The food scene mixes old recipes with newer ones, and that's part of what pulls people together there."</p>
+      </div>
+
+      <div class="example-card" style="margin-top: 2rem;">
+        <p class="example-label before">Before</p>
+        <p class="example-text">"This groundbreaking initiative underscores the organization's commitment to leveraging innovative solutions to navigate the evolving landscape of digital transformation, marking a pivotal shift in their strategic approach."</p>
+      </div>
+      <div class="example-card after-card">
+        <p class="example-label after">After</p>
+        <p class="example-text">"The company is trying something new with digital tools. It's a real change in direction for them."</p>
+      </div>
+    </section>
+
+    <!-- Ad Slot: Bottom Banner -->
+    <div class="ad-slot">
+      <p class="ad-slot-label">Advertisement</p>
+      <p class="ad-slot-size">728 &times; 90 &mdash; Leaderboard</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-left">dontwritelikeai.com</div>
+    <div class="footer-right">Powered by Claude API</div>
+  </footer>
+
+  <script>
+    const inputEl = document.getElementById('inputText');
+    const outputEl = document.getElementById('outputBox');
+    const rewriteBtn = document.getElementById('rewriteBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const charCount = document.getElementById('charCount');
+    const errorMsg = document.getElementById('errorMsg');
+    const usesLeft = document.getElementById('usesLeft');
+
+    let remainingUses = 3;
+
+    // Character count
+    inputEl.addEventListener('input', () => {
+      const len = inputEl.value.length;
+      charCount.textContent = `${len.toLocaleString()} / 5,000`;
+      charCount.classList.toggle('over', len > 5000);
+    });
+
+    // Rewrite
+    rewriteBtn.addEventListener('click', async () => {
+      const text = inputEl.value.trim();
+
+      // Validation
+      if (text.length < 20) {
+        showError('Give me at least 20 characters to work with.');
+        return;
+      }
+      if (text.length > 5000) {
+        showError('Keep it under 5,000 characters.');
+        return;
+      }
+
+      hideError();
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/rewrite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (data.error === 'limit_reached') {
+            showError(data.message);
+            remainingUses = 0;
+            updateUsesDisplay();
+          } else {
+            showError(data.error || 'Something went wrong.');
+          }
+          setLoading(false);
+          return;
+        }
+
+        // Show result
+        outputEl.className = 'output-box';
+        outputEl.textContent = data.rewritten;
+        copyBtn.style.display = 'inline-block';
+
+        remainingUses = Math.max(0, remainingUses - 1);
+        updateUsesDisplay();
+      } catch (err) {
+        showError('Network error. Check your connection and try again.');
+      }
+
+      setLoading(false);
+    });
+
+    // Copy
+    copyBtn.addEventListener('click', async () => {
+      const text = outputEl.textContent;
+      if (!text) return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+      } catch {
+        // Fallback
+        const range = document.createRange();
+        range.selectNodeContents(outputEl);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    });
+
+    function setLoading(on) {
+      rewriteBtn.disabled = on;
+      if (on) {
+        rewriteBtn.textContent = 'Rewriting...';
+        outputEl.className = 'output-box loading';
+        outputEl.innerHTML = '<span class="loading-text">Rewriting</span>';
+        copyBtn.style.display = 'none';
+      } else {
+        rewriteBtn.textContent = 'Rewrite It';
+      }
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('visible');
+    }
+
+    function hideError() {
+      errorMsg.classList.remove('visible');
+    }
+
+    function updateUsesDisplay() {
+      if (remainingUses <= 0) {
+        usesLeft.innerHTML = '<strong>0</strong> free rewrites left today';
+      } else {
+        usesLeft.innerHTML = `<strong>${remainingUses}</strong> free rewrite${remainingUses !== 1 ? 's' : ''} left today`;
+      }
+    }
+
+    updateUsesDisplay();
+  </script>
+</body>
+</html>
