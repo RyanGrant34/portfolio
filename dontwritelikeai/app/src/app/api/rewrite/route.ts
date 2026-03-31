@@ -1,9 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { getOrCreateUser, trackRewrite } from "@/lib/supabase";
 
-const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
-const FREE_DAILY_LIMIT = parseInt(process.env.FREE_DAILY_LIMIT || "3");
+const FREE_MODEL = "claude-haiku-4-5-20251001";
+const PRO_MODEL = "claude-sonnet-4-5-20250514";
+const FREE_DAILY_LIMIT = 3;
 
 const anthropic = new Anthropic();
 
@@ -66,8 +69,95 @@ const SYSTEM_PROMPT = `You are a writing editor who removes AI-sounding patterns
 5. Match the formality level of the input. Don't make formal text casual or casual text formal.
 6. Never add information that wasn't in the original.`;
 
+const TONE_INSTRUCTIONS: Record<string, string> = {
+  academic:
+    "\n\nAdditional instruction: Lean toward a scholarly, formal register. Use precise terminology. Keep it human-sounding but appropriate for academic papers or research writing.",
+  casual:
+    "\n\nAdditional instruction: Make the tone relaxed and conversational. Use shorter sentences, contractions, and informal phrasing. It should read like someone talking to a friend.",
+  professional:
+    "\n\nAdditional instruction: Keep the tone polished and business-appropriate. Clear, direct, confident. Suitable for work emails, reports, or professional communications.",
+};
+
 export async function POST(request: NextRequest) {
-  // Rate limiting via cookies
+  const body = await request.json();
+  const { text, tone } = body;
+
+  if (!text || typeof text !== "string") {
+    return NextResponse.json(
+      { error: "Please provide text to rewrite." },
+      { status: 400 }
+    );
+  }
+
+  if (text.trim().length < 20) {
+    return NextResponse.json(
+      { error: "Please provide at least 20 characters." },
+      { status: 400 }
+    );
+  }
+
+  // Check if user is authenticated
+  const { userId } = await auth();
+
+  if (userId) {
+    // Authenticated user — use DB-based tracking
+    const clerkUser = await currentUser();
+    const email = clerkUser?.primaryEmailAddress?.emailAddress || "";
+    await getOrCreateUser(userId, email);
+
+    const usage = await trackRewrite(userId);
+    if (!usage.allowed) {
+      return NextResponse.json(
+        {
+          error: "limit_reached",
+          message:
+            "You've used your 3 free rewrites for today. Upgrade to Pro for unlimited access.",
+          remaining: 0,
+        },
+        { status: 429 }
+      );
+    }
+
+    const isPro = usage.plan === "pro";
+    const maxChars = isPro ? 15000 : 5000;
+    if (text.length > maxChars) {
+      return NextResponse.json(
+        { error: `Text must be under ${maxChars.toLocaleString()} characters.` },
+        { status: 400 }
+      );
+    }
+
+    const model = isPro ? PRO_MODEL : FREE_MODEL;
+    const systemPrompt =
+      isPro && tone && TONE_INSTRUCTIONS[tone]
+        ? SYSTEM_PROMPT + TONE_INSTRUCTIONS[tone]
+        : SYSTEM_PROMPT;
+
+    try {
+      const message = await anthropic.messages.create({
+        model,
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: "user", content: text }],
+      });
+
+      const rewritten =
+        message.content[0].type === "text" ? message.content[0].text : "";
+
+      return NextResponse.json({
+        rewritten,
+        remaining: usage.remaining,
+      });
+    } catch (err: unknown) {
+      console.error("Claude API error:", err);
+      return NextResponse.json(
+        { error: "Something went wrong. Try again." },
+        { status: 500 }
+      );
+    }
+  }
+
+  // Unauthenticated user — cookie-based rate limiting
   const cookieStore = await cookies();
   const today = new Date().toISOString().split("T")[0];
   const usageCookie = cookieStore.get("dwlai_usage");
@@ -88,20 +178,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "limit_reached",
-        message: `You've used your ${FREE_DAILY_LIMIT} free rewrites for today. Come back tomorrow or upgrade for unlimited access.`,
+        message: `You've used your ${FREE_DAILY_LIMIT} free rewrites for today. Sign up for more.`,
         remaining: 0,
       },
       { status: 429 }
-    );
-  }
-
-  const body = await request.json();
-  const { text } = body;
-
-  if (!text || typeof text !== "string") {
-    return NextResponse.json(
-      { error: "Please provide text to rewrite." },
-      { status: 400 }
     );
   }
 
@@ -112,16 +192,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (text.trim().length < 20) {
-    return NextResponse.json(
-      { error: "Please provide at least 20 characters." },
-      { status: 400 }
-    );
-  }
-
   try {
     const message = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
+      model: FREE_MODEL,
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: text }],
@@ -130,23 +203,22 @@ export async function POST(request: NextRequest) {
     const rewritten =
       message.content[0].type === "text" ? message.content[0].text : "";
 
-    // Update usage cookie
     const newCount = usageCount + 1;
     const response = NextResponse.json({
       rewritten,
       remaining: FREE_DAILY_LIMIT - newCount,
-      usage: {
-        input_tokens: message.usage.input_tokens,
-        output_tokens: message.usage.output_tokens,
-      },
     });
 
-    response.cookies.set("dwlai_usage", JSON.stringify({ date: today, count: newCount }), {
-      httpOnly: true,
-      sameSite: "strict",
-      maxAge: 86400,
-      path: "/",
-    });
+    response.cookies.set(
+      "dwlai_usage",
+      JSON.stringify({ date: today, count: newCount }),
+      {
+        httpOnly: true,
+        sameSite: "strict",
+        maxAge: 86400,
+        path: "/",
+      }
+    );
 
     return response;
   } catch (err: unknown) {

@@ -124,7 +124,9 @@ export function Pricing() {
                     </span>
                     <span>/forever</span>
                   </div>
-                  <FeyButton className="w-full">Start Rewriting</FeyButton>
+                  <a href="/login">
+                    <FeyButton className="w-full">Start Rewriting</FeyButton>
+                  </a>
                 </div>
                 <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
                   <li className="flex items-center gap-2">
@@ -186,11 +188,13 @@ export function Pricing() {
                       $96/year &middot; billed annually
                     </p>
                   )}
-                  <FeyButton
-                    className="w-full bg-[var(--accent)] after:bg-[var(--accent-dim)] [box-shadow:none] after:[box-shadow:inset_0_0_0_0.5px_rgba(200,194,182,0.2),0_0_12px_rgba(194,54,22,0.3)]"
-                  >
-                    Go Unlimited
-                  </FeyButton>
+                  <a href="/login">
+                    <FeyButton
+                      className="w-full bg-[var(--accent)] after:bg-[var(--accent-dim)] [box-shadow:none] after:[box-shadow:inset_0_0_0_0.5px_rgba(200,194,182,0.2),0_0_12px_rgba(194,54,22,0.3)]"
+                    >
+                      Go Unlimited
+                    </FeyButton>
+                  </a>
                 </div>
                 <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
                   <li className="flex items-center gap-2">
