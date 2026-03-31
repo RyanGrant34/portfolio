@@ -21,8 +21,8 @@ export function Pricing() {
           className="mx-auto max-w-xl space-y-4"
         >
           <div className="flex justify-center">
-            <div className="rounded-lg border border-[var(--ghost)]/20 px-4 py-1 font-mono text-xs uppercase tracking-widest text-[var(--muted)]">
-              Pricing
+            <div className="border border-[var(--ghost)] py-1 px-4 font-mono text-[0.65rem] text-[var(--accent)] uppercase tracking-[0.2em]">
+              // pricing
             </div>
           </div>
           <h2
@@ -31,7 +31,7 @@ export function Pricing() {
           >
             Free rewrites. Or go unlimited.
           </h2>
-          <p className="text-[var(--muted)] mt-5 text-center text-sm md:text-base">
+          <p className="text-[var(--muted)] mt-5 text-center text-sm font-mono">
             Three free rewrites a day covers most people. But if you write for a
             living, the math changes fast.
           </p>
@@ -49,14 +49,18 @@ export function Pricing() {
             <button
               onClick={() => setYearly(!yearly)}
               className={cn(
-                "relative w-11 h-6 rounded-full transition-colors",
-                yearly ? "bg-[var(--accent)]" : "bg-[var(--ghost)]/20"
+                "relative w-11 h-6 rounded-full transition-colors border",
+                yearly
+                  ? "bg-[var(--accent)]/20 border-[var(--accent)]"
+                  : "bg-[var(--ghost)]/20 border-[var(--ghost)]"
               )}
             >
               <span
                 className={cn(
-                  "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-[var(--paper)] transition-transform",
-                  yearly && "translate-x-5"
+                  "absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform",
+                  yearly
+                    ? "translate-x-5 bg-[var(--accent)]"
+                    : "bg-[var(--muted)]"
                 )}
               />
             </button>
@@ -69,7 +73,7 @@ export function Pricing() {
               Yearly
             </span>
             {yearly && (
-              <Badge className="bg-[var(--success)] text-white border-transparent text-[0.6rem]">
+              <Badge className="bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30 text-[0.6rem] font-mono">
                 Save 33%
               </Badge>
             )}
@@ -81,7 +85,7 @@ export function Pricing() {
             className={cn(
               "z--10 pointer-events-none absolute inset-0 size-full",
               "bg-[linear-gradient(to_right,var(--ghost)_1px,transparent_1px),linear-gradient(to_bottom,var(--ghost)_1px,transparent_1px)]",
-              "bg-[size:32px_32px] opacity-[0.04]",
+              "bg-[size:48px_48px] opacity-[0.06]",
               "[mask-image:radial-gradient(ellipse_at_center,var(--ink)_10%,transparent)]"
             )}
           />
@@ -93,17 +97,17 @@ export function Pricing() {
             viewport={{ once: true }}
             className="mx-auto w-full max-w-2xl space-y-3"
           >
-            <div className="grid md:grid-cols-2 bg-[var(--ink)] relative border border-[var(--ghost)]/15 p-4">
-              <PlusIcon className="absolute -top-3 -left-3 size-5 text-[var(--ghost)]/30" />
-              <PlusIcon className="absolute -top-3 -right-3 size-5 text-[var(--ghost)]/30" />
-              <PlusIcon className="absolute -bottom-3 -left-3 size-5 text-[var(--ghost)]/30" />
-              <PlusIcon className="absolute -right-3 -bottom-3 size-5 text-[var(--ghost)]/30" />
+            <div className="grid md:grid-cols-2 bg-[var(--ink)] relative border border-[var(--ghost)]/60 p-4">
+              <PlusIcon className="absolute -top-3 -left-3 size-5 text-[var(--ghost)]/50" />
+              <PlusIcon className="absolute -top-3 -right-3 size-5 text-[var(--ghost)]/50" />
+              <PlusIcon className="absolute -bottom-3 -left-3 size-5 text-[var(--ghost)]/50" />
+              <PlusIcon className="absolute -right-3 -bottom-3 size-5 text-[var(--ghost)]/50" />
 
               {/* Free Tier */}
               <div className="w-full px-4 pt-5 pb-4">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="leading-none font-semibold text-[var(--paper)]">
+                    <h3 className="leading-none font-mono font-semibold text-[var(--paper)] uppercase tracking-wider text-sm">
                       Free
                     </h3>
                     <div className="flex items-center gap-x-1">
@@ -118,17 +122,19 @@ export function Pricing() {
                   </p>
                 </div>
                 <div className="mt-10 space-y-4">
-                  <div className="text-[var(--muted)] flex items-end gap-0.5 text-xl">
+                  <div className="text-[var(--muted)] flex items-end gap-0.5 text-xl font-mono">
                     <span className="text-[var(--paper)] -mb-0.5 text-4xl font-extrabold tracking-tighter md:text-5xl">
                       $0
                     </span>
                     <span>/forever</span>
                   </div>
                   <a href="/login">
-                    <FeyButton className="w-full">Start Rewriting</FeyButton>
+                    <FeyButton className="w-full bg-transparent text-[var(--paper)] border-[var(--ghost)] hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                      Start Rewriting
+                    </FeyButton>
                   </a>
                 </div>
-                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
+                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)] font-mono">
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--ghost)]">-</span> 3 rewrites
                     per day
@@ -145,23 +151,23 @@ export function Pricing() {
               </div>
 
               {/* Pro Tier */}
-              <div className="relative w-full rounded-lg border border-[var(--ghost)]/20 bg-[var(--ink-light)] px-4 pt-5 pb-4">
+              <div className="relative w-full border border-[var(--accent)]/30 bg-[var(--ink-light)] px-4 pt-5 pb-4">
                 <BorderTrail
                   className="bg-[var(--accent)]"
                   style={{
                     boxShadow:
-                      "0px 0px 60px 30px rgba(194, 54, 22, 0.15), 0 0 100px 60px rgba(194, 54, 22, 0.05)",
+                      "0px 0px 60px 30px rgba(0, 255, 136, 0.1), 0 0 100px 60px rgba(0, 255, 136, 0.03)",
                   }}
                   size={100}
                 />
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="leading-none font-semibold text-[var(--paper)]">
+                    <h3 className="leading-none font-mono font-semibold text-[var(--accent)] uppercase tracking-wider text-sm">
                       Pro
                     </h3>
                     <div className="flex items-center gap-x-1">
                       <Infinity className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      <Badge className="bg-[var(--accent)] text-white border-transparent text-[0.65rem]">
+                      <Badge className="bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30 text-[0.65rem] font-mono">
                         Unlimited
                       </Badge>
                     </div>
@@ -171,7 +177,7 @@ export function Pricing() {
                   </p>
                 </div>
                 <div className="mt-10 space-y-4">
-                  <div className="text-[var(--muted)] flex items-end text-xl">
+                  <div className="text-[var(--muted)] flex items-end text-xl font-mono">
                     <span>$</span>
                     <motion.span
                       key={yearly ? "yearly" : "monthly"}
@@ -189,14 +195,12 @@ export function Pricing() {
                     </p>
                   )}
                   <a href="/login">
-                    <FeyButton
-                      className="w-full bg-[var(--accent)] after:bg-[var(--accent-dim)] [box-shadow:none] after:[box-shadow:inset_0_0_0_0.5px_rgba(200,194,182,0.2),0_0_12px_rgba(194,54,22,0.3)]"
-                    >
+                    <FeyButton className="w-full">
                       Go Unlimited
                     </FeyButton>
                   </a>
                 </div>
-                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)]">
+                <ul className="mt-6 space-y-2 text-sm text-[var(--muted)] font-mono">
                   <li className="flex items-center gap-2">
                     <span className="text-[var(--accent)]">+</span>{" "}
                     <span className="text-[var(--paper)]">

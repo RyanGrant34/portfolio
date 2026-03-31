@@ -2,22 +2,19 @@
 
 import { SignIn, SignUp } from "@clerk/nextjs";
 import { useState } from "react";
-import { PenLine } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-grid">
       {/* Logo */}
       <a href="/" className="flex items-center gap-2 mb-8">
-        <div className="w-8 h-8 rounded bg-[var(--accent)] flex items-center justify-center">
-          <PenLine className="w-4 h-4 text-white" />
+        <div className="w-8 h-8 border border-[var(--accent)]/50 flex items-center justify-center">
+          <Terminal className="w-4 h-4 text-[var(--accent)]" />
         </div>
-        <span
-          className="text-xl font-bold text-[var(--paper)]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
+        <span className="text-lg font-mono font-bold text-[var(--accent)] tracking-wider">
           DWLAI
         </span>
       </a>
@@ -38,7 +35,7 @@ export default function LoginPage() {
       )}
 
       {/* Toggle */}
-      <p className="mt-6 text-sm text-[var(--muted)]">
+      <p className="mt-6 text-sm font-mono text-[var(--muted)]">
         {mode === "signin" ? "No account? " : "Already have an account? "}
         <button
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}

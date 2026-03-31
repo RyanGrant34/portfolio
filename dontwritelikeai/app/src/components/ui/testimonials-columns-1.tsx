@@ -26,32 +26,38 @@ export const TestimonialsColumn = (props: {
           ease: "linear",
           repeatType: "loop",
         }}
-        className="flex flex-col gap-6 pb-6"
+        className="flex flex-col gap-4 pb-4"
       >
         {[
           ...new Array(2).fill(0).map((_, index) => (
             <React.Fragment key={index}>
               {props.testimonials.map(({ text, image, name, role }, i) => (
                 <div
-                  className="p-8 rounded-2xl border border-[var(--ghost)]/15 bg-[var(--ink-light)] max-w-xs w-full"
+                  className="p-6 border border-[var(--ghost)]/60 bg-[var(--ink-light)] max-w-xs w-full relative group hover:border-[var(--accent)]/30 transition-colors duration-300"
                   key={i}
                 >
-                  <div className="text-sm text-[var(--paper)] leading-relaxed">
+                  {/* Corner accents */}
+                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[var(--accent)]/40" />
+                  <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[var(--accent)]/40" />
+                  <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[var(--accent)]/40" />
+                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[var(--accent)]/40" />
+
+                  <div className="text-sm text-[var(--paper-dark)] leading-relaxed font-[var(--font-body)]">
                     {text}
                   </div>
-                  <div className="flex items-center gap-3 mt-5">
+                  <div className="flex items-center gap-3 mt-5 pt-4 border-t border-[var(--ghost)]/30">
                     <img
-                      width={40}
-                      height={40}
+                      width={36}
+                      height={36}
                       src={image}
                       alt={name}
-                      className="h-10 w-10 rounded-full object-cover"
+                      className="h-9 w-9 rounded-none object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
                     />
                     <div className="flex flex-col">
-                      <div className="font-medium tracking-tight leading-5 text-[var(--paper)] text-sm">
+                      <div className="font-mono font-semibold text-[var(--paper)] text-xs tracking-wide">
                         {name}
                       </div>
-                      <div className="leading-5 text-[var(--muted)] tracking-tight text-xs">
+                      <div className="font-mono text-[var(--muted)] text-[0.65rem] tracking-wider uppercase">
                         {role}
                       </div>
                     </div>
@@ -92,7 +98,7 @@ const testimonials: Testimonial[] = [
     role: "Startup Founder",
   },
   {
-    text: "The before and after difference is wild. It caught stuff I didn't even notice was robotic — the em dashes, the triple lists, the 'it's important to note' filler.",
+    text: "The before and after difference is wild. It caught stuff I didn't even notice was robotic — the em dashes, the triple lists, the 'it is important to note' filler.",
     image: "https://randomuser.me/api/portraits/women/44.jpg",
     name: "Priya Sharma",
     role: "Content Strategist",
@@ -136,23 +142,26 @@ export const Testimonials = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           viewport={{ once: true }}
-          className="flex flex-col items-center justify-center max-w-[540px] mx-auto mb-10"
+          className="flex flex-col items-center justify-center max-w-[540px] mx-auto mb-12"
         >
           <div className="flex justify-center">
-            <div className="border border-[var(--ghost)]/20 py-1 px-4 rounded-lg text-xs font-mono text-[var(--muted)] uppercase tracking-widest">
-              Testimonials
+            <div className="border border-[var(--ghost)] py-1 px-4 font-mono text-[0.65rem] text-[var(--accent)] uppercase tracking-[0.2em]">
+              // testimonials
             </div>
           </div>
 
-          <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold tracking-tighter mt-5 text-[var(--paper)] font-[var(--font-display)]">
+          <h2
+            className="text-3xl md:text-4xl xl:text-5xl font-bold tracking-tighter mt-6 text-[var(--paper)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             People stopped getting flagged
           </h2>
-          <p className="text-center mt-4 text-[var(--muted)] text-sm">
+          <p className="text-center mt-4 text-[var(--muted)] text-sm font-mono">
             Real users. Real results. No more robot voice.
           </p>
         </motion.div>
 
-        <div className="flex justify-center gap-6 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
+        <div className="flex justify-center gap-4 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
           <TestimonialsColumn testimonials={firstColumn} duration={15} />
           <TestimonialsColumn
             testimonials={secondColumn}

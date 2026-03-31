@@ -1,4 +1,4 @@
-import { PenLine } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 interface MenuItem {
   title: string;
@@ -24,7 +24,7 @@ const Footer2 = ({
     {
       title: "Product",
       links: [
-        { text: "Rewrite Tool", url: "#" },
+        { text: "Rewrite Tool", url: "/app" },
         { text: "Pricing", url: "#pricing" },
         { text: "API Access", url: "#" },
         { text: "Chrome Extension", url: "#" },
@@ -56,7 +56,7 @@ const Footer2 = ({
       ],
     },
   ],
-  copyright = "© 2026 dontwritelikeai.com. All rights reserved.",
+  copyright = "© 2026 dontwritelikeai.com",
   bottomLinks = [
     { text: "Terms of Service", url: "#" },
     { text: "Privacy Policy", url: "#" },
@@ -64,39 +64,36 @@ const Footer2 = ({
   ],
 }: Footer2Props) => {
   return (
-    <section className="py-16 border-t border-[var(--ghost)]/10">
+    <section className="py-16 border-t border-[var(--ghost)]/30">
       <div className="max-w-4xl mx-auto px-6">
         <footer>
           <div className="grid grid-cols-2 gap-8 lg:grid-cols-6">
             <div className="col-span-2 mb-8 lg:mb-0">
               <div className="flex items-center gap-2 lg:justify-start">
-                <div className="w-8 h-8 rounded bg-[var(--accent)] flex items-center justify-center">
-                  <PenLine className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 border border-[var(--accent)]/50 flex items-center justify-center">
+                  <Terminal className="w-4 h-4 text-[var(--accent)]" />
                 </div>
-                <p
-                  className="text-lg font-bold text-[var(--paper)]"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
+                <p className="text-sm font-mono font-bold text-[var(--accent)] tracking-wider uppercase">
                   DWLAI
                 </p>
               </div>
-              <p className="mt-4 font-medium text-[var(--muted)] text-sm">
+              <p className="mt-4 text-[var(--muted)] text-sm font-mono">
                 {tagline}
               </p>
-              <p className="mt-2 text-xs text-[var(--ghost)]/40">
+              <p className="mt-2 text-xs text-[var(--ghost)] font-mono">
                 Powered by Claude API
               </p>
             </div>
             {menuItems.map((section, sectionIdx) => (
               <div key={sectionIdx}>
-                <h3 className="mb-4 font-semibold text-[var(--paper)] text-sm font-mono uppercase tracking-wider">
+                <h3 className="mb-4 font-mono text-[var(--accent)]/70 text-[0.65rem] uppercase tracking-[0.2em]">
                   {section.title}
                 </h3>
                 <ul className="space-y-3 text-[var(--muted)]">
                   {section.links.map((link, linkIdx) => (
                     <li
                       key={linkIdx}
-                      className="text-sm hover:text-[var(--paper)] transition-colors"
+                      className="text-sm font-mono hover:text-[var(--accent)] transition-colors"
                     >
                       <a href={link.url}>{link.text}</a>
                     </li>
@@ -105,13 +102,13 @@ const Footer2 = ({
               </div>
             ))}
           </div>
-          <div className="mt-16 flex flex-col justify-between gap-4 border-t border-[var(--ghost)]/10 pt-6 text-xs font-mono text-[var(--muted)] md:flex-row md:items-center">
+          <div className="mt-16 flex flex-col justify-between gap-4 border-t border-[var(--ghost)]/20 pt-6 text-xs font-mono text-[var(--muted)] md:flex-row md:items-center">
             <p>{copyright}</p>
             <ul className="flex gap-4">
               {bottomLinks.map((link, linkIdx) => (
                 <li
                   key={linkIdx}
-                  className="underline underline-offset-2 hover:text-[var(--paper)] transition-colors"
+                  className="hover:text-[var(--accent)] transition-colors"
                 >
                   <a href={link.url}>{link.text}</a>
                 </li>
